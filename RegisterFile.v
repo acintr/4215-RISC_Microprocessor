@@ -128,123 +128,123 @@ endmodule
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Register File Test
-module RegisterFileTest;
-    reg [3:0] A;
-    reg [3:0] B;
-    reg [3:0] C;
-    reg [31:0] PC;
-    reg Ld, Clk;
-    wire [31:0] PA;
-    wire [31:0] PB;
-    // integer fr, fw, fs, i;
-    integer i;
-    RegisterFile RF (PA, PB, PC, C, A, B, Ld, Clk); // Register File instantiation
-    reg [32:0] V[0:15];
-    initial #1000 $finish;
+// // Register File Test
+// module RegisterFileTest;
+//     reg [3:0] A;
+//     reg [3:0] B;
+//     reg [3:0] C;
+//     reg [31:0] PC;
+//     reg Ld, Clk;
+//     wire [31:0] PA;
+//     wire [31:0] PB;
+//     // integer fr, fw, fs, i;
+//     integer i;
+//     RegisterFile RF (PA, PB, PC, C, A, B, Ld, Clk); // Register File instantiation
+//     reg [32:0] V[0:15];
+//     initial #1000 $finish;
 
-    initial begin       // Clock
-        Clk = 1'b0;
-        repeat (1000) #5 Clk = ~Clk;
-    end
+//     initial begin       // Clock
+//         Clk = 1'b0;
+//         repeat (1000) #5 Clk = ~Clk;
+//     end
 
-    // initial begin       // Load
-    //     Ld = 1'b0;
-    //     repeat (1000) #5 Ld = ~Ld;
-    // end
+//     // initial begin       // Load
+//     //     Ld = 1'b0;
+//     //     repeat (1000) #5 Ld = ~Ld;
+//     // end
 
-    initial begin fork
-        #180 $display("Checking PA and PB"); 
-        #181 $display("A             PA      |B              PB      |C              PC                         t");
+//     initial begin fork
+//         #180 $display("Checking PA and PB"); 
+//         #181 $display("A             PA      |B              PB      |C              PC                         t");
 
-        // Checking PA and PB; PA even Registers and PB odd Registers
-        #185 A = 4'b0000;
-        #185 B = 4'b0001;
+//         // Checking PA and PB; PA even Registers and PB odd Registers
+//         #185 A = 4'b0000;
+//         #185 B = 4'b0001;
 
-        #190 A = 4'b0010;
-        #190 B = 4'b0011;
+//         #190 A = 4'b0010;
+//         #190 B = 4'b0011;
 
-        #195 A = 4'b0100;
-        #195 B = 4'b0101;
+//         #195 A = 4'b0100;
+//         #195 B = 4'b0101;
 
-        #200 A = 4'b0110;
-        #200 B = 4'b0111;
+//         #200 A = 4'b0110;
+//         #200 B = 4'b0111;
 
-        #205 A = 4'b1000;
-        #205 B = 4'b1001;
+//         #205 A = 4'b1000;
+//         #205 B = 4'b1001;
 
-        #210 A = 4'b1010;
-        #210 B = 4'b1011;
+//         #210 A = 4'b1010;
+//         #210 B = 4'b1011;
 
-        #215 A = 4'b1100;
-        #215 B = 4'b1101;
+//         #215 A = 4'b1100;
+//         #215 B = 4'b1101;
 
-        #220 A = 4'b1110;
-        #220 B = 4'b1111;
+//         #220 A = 4'b1110;
+//         #220 B = 4'b1111;
         
-        // Changing value of R10
-        #275 $display("Changing value at R10");
-        #280 B = 4'b1010;
-        // #290 $display("BEFORE: Value at R10 = %d", PB);
-        #300 C = 4'b1010;
-        #300 Ld = 4'b1;
-        #300 PC = 32'b00000000_00000000_00000011_10101011;      // New value at PC = 939
-        #310 Ld = 1'b0;
-        #315 A = 4'b1010;
-        // #320 $display("AFTER: Value at R10 = %d = %b", PA);
+//         // Changing value of R10
+//         #275 $display("Changing value at R10");
+//         #280 B = 4'b1010;
+//         // #290 $display("BEFORE: Value at R10 = %d", PB);
+//         #300 C = 4'b1010;
+//         #300 Ld = 4'b1;
+//         #300 PC = 32'b00000000_00000000_00000011_10101011;      // New value at PC = 939
+//         #310 Ld = 1'b0;
+//         #315 A = 4'b1010;
+//         // #320 $display("AFTER: Value at R10 = %d = %b", PA);
 
-    join
-    end
+//     join
+//     end
 
-    initial begin       // Monitoring Ports and Controls
-        $display("A             PA      |B              PB      |C              PC                         t");
-        $monitor("%d    %d      |%d     %d      |%d     %d      %d", A, PA, B, PB, C, PC,$time);
-    end
+//     initial begin       // Monitoring Ports and Controls
+//         $display("A             PA      |B              PB      |C              PC                         t");
+//         $monitor("%d    %d      |%d     %d      |%d     %d      %d", A, PA, B, PB, C, PC,$time);
+//     end
 
-    initial begin       // Loading Registers with input file
-        A = 4'b0000;
-        B = A;
-        C = 4'b0000;
-        i = 0;
-        // fr = $fopen("reg_input.txt","r");
-        Ld = 4'b0000;
-        V[0] = 0;    
-        V[1] = 4253;
-        V[2] = 535454;
-        V[3] = 531; // <3
-        V[4] = 488;
-        V[5] = 99999;
-        V[6] = 123456;
-        V[7] = 69;
-        V[8] = 3;
-        V[9] = 04721;
-        V[10] = 787;
-        V[11] = 223;
-        V[12] = 4807;
-        V[13] = 1111111;
-        V[14] = 6546889;
-        V[15] = 802151388;
+//     initial begin       // Loading Registers with input file
+//         A = 4'b0000;
+//         B = A;
+//         C = 4'b0000;
+//         i = 0;
+//         // fr = $fopen("reg_input.txt","r");
+//         Ld = 4'b0000;
+//         V[0] = 0;    
+//         V[1] = 4253;
+//         V[2] = 535454;
+//         V[3] = 531; // <3
+//         V[4] = 488;
+//         V[5] = 99999;
+//         V[6] = 123456;
+//         V[7] = 69;
+//         V[8] = 3;
+//         V[9] = 04721;
+//         V[10] = 787;
+//         V[11] = 223;
+//         V[12] = 4807;
+//         V[13] = 1111111;
+//         V[14] = 6546889;
+//         V[15] = 802151388;
 
-        #5 $display ("Loading Registers");
-        ////////////////////
-        while (i < 16) begin
-            PC = V[i];
-            // $display("%b    %d", V[i], V[i]);
-            // $display("%b    %d", PC, PC);
-            Ld = 4'b0001;
-            #10 Ld = 4'b0000;       // Delays are used to make sure Ld and Clk match in order to load data on Register succesfully
-            C = C + 4'b0001;
-            A = A + 4'b0001;
-            B = A;
-            i = i + 1;
-        end 
-        ////////////////////
-        $display("Registers loaded!");
-        // $display("%b        %b      %d      %d", PA, A, PB, B);
-        // $fclose(fr);
-    end
+//         #5 $display ("Loading Registers");
+//         ////////////////////
+//         while (i < 16) begin
+//             PC = V[i];
+//             // $display("%b    %d", V[i], V[i]);
+//             // $display("%b    %d", PC, PC);
+//             Ld = 4'b0001;
+//             #10 Ld = 4'b0000;       // Delays are used to make sure Ld and Clk match in order to load data on Register succesfully
+//             C = C + 4'b0001;
+//             A = A + 4'b0001;
+//             B = A;
+//             i = i + 1;
+//         end 
+//         ////////////////////
+//         $display("Registers loaded!");
+//         // $display("%b        %b      %d      %d", PA, A, PB, B);
+//         // $fclose(fr);
+//     end
 
-endmodule
+// endmodule
 
 /*  This is to read Register values from an input file
 while (!$feof(fr)) begin
