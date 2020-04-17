@@ -1,33 +1,37 @@
-module Encoder (output reg [5:0] Out, input [31:0] In);
-    always @ (In)
+module Encoder (output reg [5:0] Out, input [31:0] In, input reset);
+    always @ (In, reset)
+    if(reset == 1) Out = 0;
+    else
     begin
-        Out = 0;
-        if (In [27:25] == 3'b000)       //if bits 27 to 25 is 000
+        if (In [31:28] == 4'b1110)          //Condition Always
         begin
-            if (In [24:21] == 4'b0100)  //if opcode is 0100
+            if (In [27:25] == 3'b000)       //if bits 27 to 25 is 000
+            begin 
+                if (In [24:21] == 4'b0100)  //if opcode is 0100
+                begin
+                    case (In [11:5])
+                    7'b0000000:  Out = 10;   //State 10 == ADD R-R
+                    default:     Out = 12;   //State 11 == ADD shift
+                    endcase
+                end
+            end
+            if (In [27:25] == 3'b001)       //if bits 27 to 25 is 001
             begin
-                case (In [4])
-                1'b0:   Out = 11;       //State 11 == ADD shift
-                1'b1:   Out = 10;       //State 10 == ADD R-R
+                case (In [24:21])
+                4'b0100:    Out = 11;       //State 12 == ADD imme
+                4'b1010:    Out = 13;       //State 13 == CMP
+                4'b1101:    Out = 14;       //State 14 == MOV
                 endcase
             end
-        end
-        if (In [27:25] == 3'b001)       //if bits 27 to 25 is 001
-        begin
-            case (In [24:21])
-            4'b0100:    Out = 12;       //State 12 == ADD imme
-            4'b1010:    Out = 13;       //State 13 == CMP
-            4'b1101:    Out = 14;       //State 14 == MOV
-            endcase
-        end
-        if (In [27:25] == 3'b010)       //if bits 27 to 25 is 010
-        begin
-            if (In [24] == 1'b0)        
+            if (In [27:25] == 3'b010 | In [27:25] == 3'b011)       //if bits 27 to 25 is 010
             begin
-                case (In [20])
-                1'b0:   Out = 20;       //State 20 == LDR
-                1'b1:   Out = 25;       //State 25 == STR
-                endcase
+                if (In [24] == 1'b1 & In [22:21] == 2'b00)        
+                begin
+                    case (In [20])
+                    1'b1:   Out = 20;       //State 20 == LDR
+                    1'b0:   Out = 25;       //State 25 == STR
+                    endcase
+                end
             end
         end
         if (In [27:25] == 4'b101)       //if bits 27 to 25 is 101
@@ -35,11 +39,10 @@ module Encoder (output reg [5:0] Out, input [31:0] In);
             if (In [24] == 1'b0)        //branch without link
             begin
                 case (In [31:28])       //Condition
-                4'b0000:    Out = 30;   //State 30 == BEQ
+                4'b1110:    Out = 30;   //State 30 == B
                 endcase
             end
         end
-        $display("Encoder: IN=%b    OUT=%d", In, Out);
     end
 endmodule
 
@@ -94,7 +97,7 @@ always @ (In, VarInv)
 endmodule
 
 module InverterMux (output reg InvIn, input MOC, Cond, Entrythree, Entryfour, input [1:0] S);
-  always @ (S) begin
+  always @ (S, MOC, Cond) begin
     case(S)
       2'b00: InvIn = MOC;
 	  2'b01: InvIn = Cond;
@@ -119,7 +122,7 @@ input [5:0] EncoderOut, Entryone, ContRegiOut, IncRegiOut, input [1:0] M );
   end 
 endmodule 
 
-module Microstore (output reg FR, RF, IR, MAR, MDR, ReadWrite, MOV, MC, MD, ME, Inv, output reg [1:0] MA, 
+module Microstore (output reg [5:0] state_out, output reg FR, RF, IR, MAR, MDR, ReadWrite, MOV, MC, MD, ME, Inv, output reg [1:0] MA, 
 output reg [1:0] MB, output reg [4:0] OP, output reg [5:0] CR, 
 output reg [2:0] N, output reg [1:0] S, input [5:0] state);
     always @ (state) begin
@@ -525,13 +528,14 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     S = 2'b00;
                 end
         endcase
+        state_out = state;
     end
 endmodule 
 
-module ControlRegister (output reg FR, RF, IR, MAR, MDR, ReadWrite, MOV, MC, MD, ME, Inv, output reg [1:0] MA, 
+module ControlRegister (output reg [5:0] state, output reg FR, RF, IR, MAR, MDR, ReadWrite, MOV, MC, MD, ME, Inv, output reg [1:0] MA, 
 output reg [1:0] MB, output reg [4:0] OP, output reg [5:0] CR, output reg [2:0] N, output reg [1:0] S, 
 input FR_IN, RF_IN, IR_IN, MAR_IN, MDR_IN, ReadWrite_IN, MOV_IN, MC_IN, MD_IN, ME_IN, Inv_IN, input [1:0] MA_IN, 
-input [1:0] MB_IN, input [4:0] OP_IN, input [5:0] CR_IN, input [2:0] N_IN, input [1:0] S_IN, input Clk);
+input [1:0] MB_IN, input [4:0] OP_IN, input [5:0] CR_IN, input [2:0] N_IN, input [1:0] S_IN, input Clk, input [5:0] state_in);
     always @ (posedge Clk) begin
         FR = FR_IN;
         RF = RF_IN;
@@ -549,13 +553,14 @@ input [1:0] MB_IN, input [4:0] OP_IN, input [5:0] CR_IN, input [2:0] N_IN, input
         Inv = Inv_IN;
         CR = CR_IN;
         N = N_IN;
-        S = N_IN;
+        S = S_IN;
+        state = state_in;
     end
 endmodule
 
 module ControlUnit (output [5:0] state, output [5:0] CR, output [4:0] OP, output [2:0] N, output [1:0] MA, MB, S,
                     output FR, RF, IR, MAR, MDR, ReadWrite, MOV, MC, MD, ME, Inv,
-                    input [31:0] InstructionRegister, input MOC, Cond, c2, c3, Clk);
+                    input [31:0] InstructionRegister, input MOC, Cond, c2, c3, Clk, reset);
     wire [5:0] EuMux0, uMux1, CRuMux2, IncruMux3, uMux_2_uStr, Incr;
     wire [2:0] N_2_NSAS;
     wire [1:0] S_2_cMux, NSAS_2_uMux;
@@ -563,7 +568,7 @@ module ControlUnit (output [5:0] state, output [5:0] CR, output [4:0] OP, output
 
     // Microstore to Control Register
     wire uFR, uRF, uIR, uMAR, uMDR, uReadWrite, uMOV, uMC, uMD, uME, uInv;
-    wire [5:0] uCR;
+    wire [5:0] uCR, state_uStr_2_CR;
     wire [4:0] uOP;
     wire [2:0] uN;
     wire [1:0] uMA, uMB, uS;
@@ -572,35 +577,35 @@ module ControlUnit (output [5:0] state, output [5:0] CR, output [4:0] OP, output
     assign CR = CRuMux2;
     assign N = N_2_NSAS;
     assign S = S_2_cMux;
-    assign state = uMux_2_uStr;
+    // assign state = uMux_2_uStr;
 
-    Encoder encoder (EuMux0, InstructionRegister);
+    Encoder encoder (EuMux0, InstructionRegister, reset);
     NextStateAddressSelector nsas (NSAS_2_uMux, N_2_NSAS, Sts);
     Adder adder (Incr, uMux_2_uStr);
     IncrementRegister incrReg (IncruMux3, Incr, Clk);
     Inverter inverter (Sts, cMux_2_inv, Inv);
     InverterMux cMux (cMux_2_inv, MOC, Cond, c2, c3, S_2_cMux);
     MicrostoreMux uMux (uMux_2_uStr, EuMux0, uMux1, CRuMux2, IncruMux3, NSAS_2_uMux);
-    Microstore uStore (uFR, uRF, uIR, uMAR, uMDR, uReadWrite, uMOV, uMC, uMD, uME, 
+    Microstore uStore (state_uStr_2_CR, uFR, uRF, uIR, uMAR, uMDR, uReadWrite, uMOV, uMC, uMD, uME, 
                         uInv, uMA, uMB, uOP, uCR, uN, uS, uMux_2_uStr);
-    ControlRegister ctrlReg (FR, RF, IR, MAR, MDR, ReadWrite, MOV, MC, MD, ME, 
+    ControlRegister ctrlReg (state, FR, RF, IR, MAR, MDR, ReadWrite, MOV, MC, MD, ME, 
                             invCR, MA, MB, OP, CRuMux2, N_2_NSAS, S_2_cMux,
                             uFR, uRF, uIR, uMAR, uMDR, uReadWrite, uMOV, uMC, uMD, uME, 
-                            uInv, uMA, uMB, uOP, uCR, uN, uS, Clk);
+                            uInv, uMA, uMB, uOP, uCR, uN, uS, Clk, state_uStr_2_CR);
     
 endmodule
 
 module CUTest;
 
     reg [31:0] InstReg;
-    reg MOC, Cond, c2, c3, Clk;
+    reg MOC, Cond, c2, c3, Clk, reset;
     wire [5:0] CR;
     wire [4:0] OP;
     wire [2:0] N;
     wire [1:0] MA, MB, S;
     wire FR, RF, IR, MAR, MDR, ReadWrite, MOV, MC, MD, ME, Inv;
     wire [5:0] State; 
-    ControlUnit cu (State, CR, OP, N, MA, MB, S, FR, RF, IR, MAR, MDR, ReadWrite, MOV, MC, MD, ME, Inv, InstReg, MOC, Cond, c2, c3, Clk);  
+    ControlUnit cu (State, CR, OP, N, MA, MB, S, FR, RF, IR, MAR, MDR, ReadWrite, MOV, MC, MD, ME, Inv, InstReg, MOC, Cond, c2, c3, Clk, reset);  
 
     initial #200 $finish;
 
@@ -620,24 +625,26 @@ module CUTest;
     end
 
     initial begin fork
-
+    #1 reset = 1;
     #1 Cond = 1;
+    #3 reset = 0;
+    // #1 MOC = 1;
     // INSTRUCTION CODE                                  INSTRUCTION         STATES          RESULTS
-    #1 InstReg = 32'b11100000100000100101000000000001; // ADD R-R            STATE = 10      da 11   ?
+    #2 InstReg = 32'b11100000100000100101000000000001; // ADD R-R            STATE = 10      da 11   ?
 
-    #21 InstReg = 32'b11100010100000000001000000101000; // ADD immediate     STATE = 11      da 12   ?
+    #14 InstReg = 32'b11100010100000000001000000101000; // ADD immediate     STATE = 11      da 12   ?
 
-    #41 InstReg = 32'b11100000100000000001000100000010; // ADD shift         STATE = 12      da 11   ?
+    #26 InstReg = 32'b11100000100000000001000100000010; // ADD shift         STATE = 12      da 11   ?
     
-    #41 InstReg = 32'b11100011010000000001000000101000; // CMP               STATE = 13      da 13   OK
+    #38 InstReg = 32'b11100011010000000001000000101000; // CMP               STATE = 13      da 13   OK
 
-    #61 InstReg = 32'b11100011101000000001000000101000; // MOV               STATE = 14      da 14   OK
+    #50 InstReg = 32'b11100011101000000001000000101000; // MOV               STATE = 14      da 14   OK
 
-    #81 InstReg = 32'b11100101000101100101000000010100; // LDR               STATE = 20, 21, 22, 23      NO SALE DEL ENCODER
+    #62 InstReg = 32'b11100101000101100101000000010100; // LDR               STATE = 20, 21, 22, 23      NO SALE DEL ENCODER
 
-    #101 InstReg = 32'b11100111101001100101100011101100; // STR              STATE = 25, 26, 27, 28      NO SALE DEL ENCODEER
+    #84 InstReg = 32'b11100111100001100101100011101100; // STR              STATE = 25, 26, 27, 28      NO SALE DEL ENCODEER
 
-    #121 InstReg = 32'b11101010111111111111111111111100; // B                STATE = 30      NO SALE DEL ENCODER
+    #104 InstReg = 32'b11101010111111111111111111111100; // B                STATE = 30      NO SALE DEL ENCODER
 
     // #1 InstReg = 32'b11101010111111111111111111111100;   // FOR TESTING A SINGLE INSTRUCTION
 
