@@ -130,7 +130,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
             6'b000000: 
                 begin
                     FR = 0;
-                    RF = 1;
+                    RF = 0;
                     IR = 0;
                     MAR = 0;
                     MDR = 0;

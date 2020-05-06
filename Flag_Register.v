@@ -1,9 +1,13 @@
-module Flag_Register (output reg [3:0] Out_FR, input [3:0] In_FR, input FR_Ld, Clk);
+// N Z C V
+module Flag_Register (output reg N_out, Z_out, C_out, V_out, input N_in, Z_in, C_in, V_in, FR_Ld, Clk);
     always @ (posedge Clk)
     begin
         if (FR_Ld == 1'b1)
         begin
-        Out_FR = In_FR;
+            N_out = N_in;
+            Z_out = Z_in;
+            C_out = C_in;
+            V_out = V_in;
         end
     end
 endmodule

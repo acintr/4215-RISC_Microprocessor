@@ -1,4 +1,5 @@
-module ALU_32bit (output reg[31:0] Out, output reg Z, V, N, C_Out, input [31:0] In_A, In_B, input [4:0] OP, input C_In);
+// module ALU_32bit (output reg[31:0] Out, output reg Z, V, N, C_Out, input [31:0] In_A, In_B, input [4:0] OP, input C_In);
+module ALU_32bit (output reg[31:0] Out, output reg N, Z, C_Out, V, input [31:0] In_A, In_B, input [4:0] OP, input C_In);
     always @ (In_A, In_B, OP)   //Cada vez que cambie In_A, In_B o OP
     begin
         case(OP)
