@@ -1,9 +1,11 @@
-module Mux_C (output reg [3:0] Out_C, input [3:0] In_C0, In_C1, input S_C);
+module Mux_C (output reg [3:0] Out_C, input [3:0] IReg12_15, Ones, In_C3, IReg16_19, input [1:0] S_C);
     always @ (S_C)
     begin
         case (S_C)
-        1'b0:  Out_C = In_C0;
-        1'b1:  Out_C = In_C1;
+        2'b00:  Out_C = IReg12_15;
+        2'b01:  Out_C = Ones;
+        2'b10:  Out_C = IReg16_19; 
+        2'b11:  Out_C = In_C3;
         endcase
     end
 endmodule
