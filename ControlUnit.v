@@ -335,6 +335,86 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     N = 3'b010;
                     S = 2'b00;
                 end
+	    6'b001111: 
+		begin 
+                    FR = 1;
+                    RF = 1;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 0; 
+                    MA = 2'b00;
+                    MB = 2'b00;
+                    MC = 2'b00;
+                    MD = 0;
+                    ME = 0;
+                    OP = 5'b00000;
+                    Inv = 0;
+                    CR = 6'b000001;
+                    N = 3'b010;
+                    S = 2'b00;
+                end
+	    6'b010000: 
+		begin 
+	            FR = 1;
+                    RF = 1;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 0; 
+                    MA = 2'b00;
+                    MB = 2'b01;
+                    MC = 2'b00;
+                    MD = 0;
+                    ME = 0;
+                    OP = 5'b00000;
+                    Inv = 0;
+                    CR = 6'b000001;
+                    N = 3'b010;
+                    S = 2'b00;
+                end
+	    6'b010001: 
+		begin 
+		    FR = 1;
+                    RF = 1;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 0; 
+                    MA = 2'b00;
+                    MB = 2'b01;
+                    MC = 2'b00;
+                    MD = 0;
+                    ME = 0;
+                    OP = 5'b00000;
+                    Inv = 0;
+                    CR = 6'b000001;
+                    N = 3'b010;
+                    S = 2'b00;
+                end
+	    6'b010010: 
+		begin 
+	            FR = 1;
+                    RF = 1;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 0; 
+                    MA = 2'b00;
+                    MB = 2'b01;
+                    MC = 2'b00;
+                    MD = 0;
+                    ME = 0;
+                    OP = 5'b00000;
+                    Inv = 0;
+                    CR = 6'b000001;
+                    N = 3'b010;
+                    S = 2'b00;
+                end
             6'b010100:
                 begin
                     FR = 0;
