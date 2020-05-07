@@ -89,34 +89,13 @@ module encoder (output reg [6:0] Out, input [31:0] In, input reset);
                     else
                         Out = 103;   //STRB, inmepost, -offset
             2'b10:  if (In [20] == 1'b1)
-                        Out = 102;   //LDR, inmepost, +offset
+                        Out = 106;   //LDR, inmepost, +offset
                     else
                         Out = 101;   //STR, inmepost, +offset
             2'b11:  if (In [20] == 1'b1)
                         Out = 100;   //LDRB, inmepost, +offset
                     else
                         Out = 99;   //STRB, inmepost, +offset
-            endcase
-        end
-        if (In [27:25] == 3'b010 && In [24] == 1'b0)
-        begin
-            case (In [23:22])
-            2'b00:  if (In [20] == 1'b1)
-                        Out = 98;   //LDR, inmepost, -offset
-                    else
-                        Out = 97;   //STR, inmepost, -offset
-            2'b01:  if (In [20] == 1'b1)
-                        Out = 96;   //LDRB, inmepost, -offset
-                    else
-                        Out = 95;   //STRB, inmepost, -offset
-            2'b10:  if (In [20] == 1'b1)
-                        Out = 94;   //LDR, inmepost, +offset
-                    else
-                        Out = 93;   //STR, inmepost, +offset
-            2'b11:  if (In [20] == 1'b1)
-                        Out = 92;   //LDRB, inmepost, +offset
-                    else
-                        Out = 91;   //STRB, inmepost, +offset
             endcase
         end
 //---------------------------011---------------------------------------
@@ -199,7 +178,7 @@ module test_encoder;
     wire [6:0] Y;
     encoder fase3 (Y, X, R);
     initial begin
-        X = 32'b11100111110100010010000000000000;
+        X = 32'b11100100000100010010000000000000;
         R = 0;
     end
     initial begin
