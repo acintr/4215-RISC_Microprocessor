@@ -10,17 +10,25 @@ module Encoder (output reg [5:0] Out, input [31:0] In, input reset);
                 if (In [24:21] == 4'b0100)  //if opcode is 0100
                 begin
                     case (In [11:5])
-                    7'b0000000:  Out = 10;   //State 10 == ADD R-R
-                    default:     Out = 12;   //State 11 == ADD shift
+                    7'b0000000:                                  //State 10 == ADD R-R
+			    if(In[20] == 1'b1) Out = 15;         //When S is 1
+			    else Out = 10;
+                    default:                                     //State 11 == ADD shift
+			    if(In[20] == 1'b1) Out = 16; 
+			    else Out = 12;
                     endcase
                 end
             end
             if (In [27:25] == 3'b001)       //if bits 27 to 25 is 001
             begin
                 case (In [24:21])
-                4'b0100:    Out = 11;       //State 12 == ADD imme
-                4'b1010:    Out = 13;       //State 13 == CMP
-                4'b1101:    Out = 14;       //State 14 == MOV
+                4'b0100:                                        //State 12 == ADD imme
+			if(In[20] == 1'b1) Out = 17; 
+			else Out = 11;
+                4'b1010:    Out = 13;                           //State 13 == CMP
+                4'b1101:                                        //State 14 == MOV
+			if(In[20] == 1'b1) Out = 18;
+			else Out = 14;       
                 endcase
             end
             if (In [27:25] == 3'b010 | In [27:25] == 3'b011)       //if bits 27 to 25 is 010
