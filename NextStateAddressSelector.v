@@ -4,7 +4,7 @@ module NextStateAddressSelector (output reg [1:0] M, input [2:0] N, input Sts);
         case(N)
             3'b000: M = 2'b00;  // Encoder
             3'b001: 
-                if (Sts ==0) M = 2'b01;  // 1
+                if (Sts == 0) M = 2'b01;  // 1
                 else M = 2'b10  // Control Register
             3'b010: M = 2'b10;  // Control Register
             3'b011: M = 2'b11;  // Incrementer

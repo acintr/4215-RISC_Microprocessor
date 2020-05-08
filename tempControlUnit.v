@@ -174,35 +174,109 @@ module encoder (output reg [6:0] Out, input [31:0] In, input reset);
 endmodule
 
 // Word or byte detector 
-module AddressModeDetector (output reg byt, output reg word, input [31:0] IR);
-	always @ (IR) begin 
-		if(IR[27:25] == 3'b000 && IR[7] == 1'b1 & IR[4] == 1'b1) //Addressing Mode 3
-		begin 
-			if(IR[20] == 1'b1 && IR[6:5] == 2'b10) 
-			begin 
-				byt = 1'b1; 
-				word = 1'b0;
-			end
-			else 
-			begin 
-				byt = 1'b0;
-				word = 1'b0;
-			end
-		end
-		if(IR[27:26] == 2'b01)     //Addressing Mode 2
-		begin
-			if(IR[22] == 1'b1)
-			begin
-				byt = 1'b1;
-				word = 1'b0;
-			end
-			else
-			begin 
-				byt = 1'b0;
-				word = 1'b1;
-			end
-		end 
-	end
+// module AddressModeDetector (output reg byt, output reg word, input [31:0] IR);
+// 	always @ (IR) begin 
+// 		if(IR[27:25] == 3'b000 && IR[7] == 1'b1 & IR[4] == 1'b1) //Addressing Mode 3
+// 		begin 
+// 			if(IR[20] == 1'b1 && IR[6:5] == 2'b10) 
+// 			begin 
+// 				byt = 1'b1; 
+// 				word = 1'b0;
+// 			end
+// 			else 
+// 			begin 
+// 				byt = 1'b0;
+// 				word = 1'b0;
+// 			end
+// 		end
+// 		if(IR[27:26] == 2'b01)     //Addressing Mode 2
+// 		begin
+// 			if(IR[22] == 1'b1)
+// 			begin
+// 				byt = 1'b1;
+// 				word = 1'b0;
+// 			end
+// 			else
+// 			begin 
+// 				byt = 1'b0;
+// 				word = 1'b1;
+// 			end
+// 		end 
+// 	end
+// endmodule
+module IR_2_UWBDL (output reg U, W, B, D, L, input [31:0] IR, input [5:0] state);
+    always @ (IR, state)
+    begin
+        U = IR[23]; // Unsigned
+        if(IR[27:25] == 3'b000) // Addressing Mode 3
+        begin
+            if(IR[20] == 1'b1 && IR[6:5] == 10)
+                if(IR[20] == 0)
+                    case(IR[6:5])
+                        2'b01:
+                            begin
+                                W = 1'b0;
+                                B = 1'b0;
+                                D = 1'b0;
+                                L = 1'b0;
+                            end
+                        2'b10:
+                            begin
+                                W = 1'b0;
+                                B = 1'b0;
+                                D = 1'b1;
+                                L = 1'b1;
+                            end
+                        2'b11:
+                            begin
+                                W = 1'b0;
+                                B = 1'b0;
+                                D = 1'b1;
+                                L = 1'b0;
+                            end
+                    endcase
+                else
+                    case(IR[6:5])
+                        2'b01:
+                            begin
+                                W = 1'b0;
+                                B = 1'b0;
+                                D = 1'b0;
+                                L = 1'b1;
+                            end
+                        2'b10:
+                            begin
+                                W = 1'b0;
+                                B = 1'b1;
+                                D = 1'b0;
+                                L = 1'b1;
+                            end
+                        2'b11:
+                            begin
+                                W = 1'b0;
+                                B = 1'b0;
+                                D = 1'b0;
+                                L = 1'b1;
+                            end
+                    endcase
+            end
+        end
+        else if (IR[27:26] == 2'b01)    // Addressing Mode 2
+        begin
+            B = IR[22]; // Byte
+            W = ~B;     // Word
+            D = 1'b0;
+            L = IR[20];
+        end
+        else if (state == 6'b000000 || state == 6'b000001 || state == 6'b000010 || state == 6'b000011) // fetch
+        begin
+            B = 0;
+            W = 1;
+            D = 0;
+            L = 0;
+        end
+        // falta Addressing Mode 4
+    end
 endmodule
 
 // Next State Address Selector
@@ -255,15 +329,15 @@ always @ (In, VarInv)
   endcase
 endmodule
 
-module InverterMux (output reg InvIn, input MOC, Cond, unsignee, word, byt, Entrysix, Entryseven, Entryeight, input [2:0] S);
+module InverterMux (output reg InvIn, input MOC, Cond, unsignee, double, load, EntrySix, Entryseven, Entryeight, input [2:0] S);
   always @ (S, MOC, Cond) begin
     case(S)
       3'b000: InvIn = MOC;
 	  3'b001: InvIn = Cond;
 	  3'b010: InvIn = unsignee;
-	  3'b011: InvIn = word;
-	  3'b100: InvIn = byt;
-	  3'b101: InvIn = Entrysix;
+	  3'b011: InvIn = double;
+	  3'b100: InvIn = load;
+	  3'b101: InvIn = EntrySix;
 	  3'b110: InvIn = Entryseven;
 	  3'b111: InvIn = Entryeight;
     endcase
@@ -836,19 +910,21 @@ module ControlUnit (output [5:0] state, output [5:0] CR, output [4:0] OP, output
 
     // Microstore to Control Register
     wire uFR, uRF, uIR, uMAR, uMDR, uReadWrite, uMOV, uMD, uME, uInv;
-    wire [5:0] uCR, state_uStr_2_CR;
+    wire [5:0] uCR, state_uStr_2_CR, current_state;
     wire [4:0] uOP;
     wire [2:0] uN, uS;
     wire [1:0] uMA, uMB, uMC;
+    wire U, W, B, D, L;
 
     assign Inv = invCR;
     assign CR = CRuMux2;
     assign N = N_2_NSAS;
     assign S = S_2_cMux;
     // assign state = uMux_2_uStr;
-
+    assign state = current_state;
     Encoder encoder (EuMux0, InstructionRegister, reset);
-	AddressModeDetector amd ();                                                  //Please help here if possible, no supe bregar
+    // AddressModeDetector amd ();                                                  //Please help here if possible, no supe bregar
+    IR_2_UWBDL idk_what_its_called (InstructionRegister, U, W, B, D, L, current_state);
     NextStateAddressSelector nsas (NSAS_2_uMux, N_2_NSAS, Sts);
     Adder adder (Incr, uMux_2_uStr);
     IncrementRegister incrReg (IncruMux3, Incr, Clk);
@@ -857,7 +933,7 @@ module ControlUnit (output [5:0] state, output [5:0] CR, output [4:0] OP, output
     MicrostoreMux uMux (uMux_2_uStr, EuMux0, uMux1, CRuMux2, IncruMux3, NSAS_2_uMux);
     Microstore uStore (state_uStr_2_CR, uFR, uRF, uIR, uMAR, uMDR, uReadWrite, uMOV, uMC, uMD, uME, 
                         uInv, uMA, uMB, uOP, uCR, uN, uS, uMux_2_uStr);
-    ControlRegister ctrlReg (state, FR, RF, IR, MAR, MDR, ReadWrite, MOV, MC, MD, ME, 
+    ControlRegister ctrlReg (current_state, FR, RF, IR, MAR, MDR, ReadWrite, MOV, MC, MD, ME, 
                             invCR, MA, MB, OP, CRuMux2, N_2_NSAS, S_2_cMux,
                             uFR, uRF, uIR, uMAR, uMDR, uReadWrite, uMOV, uMC, uMD, uME, 
                             uInv, uMA, uMB, uOP, uCR, uN, uS, Clk, state_uStr_2_CR);

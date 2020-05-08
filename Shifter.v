@@ -40,6 +40,7 @@ module Shifter (output reg [31:0] Q, output reg C_out, input signed [31:0] RF, i
                         11 --> ROR = Rotate Right. Bits moved out of the right-hand end of the register are rotated back into the left-hand end.
                     */
                     if (IR[4] == 1'b0)
+                        begin
                         case(IR[6:5])
                             2'b00:  // LSL
                                 begin
@@ -81,6 +82,16 @@ module Shifter (output reg [31:0] Q, output reg C_out, input signed [31:0] RF, i
                                     if (IR[20] == 1'b1) C_out = Q[0];
                                 end
                         endcase
+                        end
+                        else if (IR[7] == 1'b1 && IR[4] == 1'b1) // Addressing Mode 3 Immediate Offset
+                        begin
+                            Q[11:8] = IR[11:8];
+                            Q[3:0] = IR[3:0];
+                        end
+                end
+            3'b010: // Addressing Mode 2 Immediate Offset
+                begin
+                    Q[11:0] = IR[11:0];
                 end
         endcase
     end
