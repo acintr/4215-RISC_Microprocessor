@@ -3,7 +3,7 @@ module encoder (output reg [7:0] Out, input [31:0] In, input reset);
     if (reset == 1) Out = 0;
     else
     begin
-//------------------000-------------------------------------------
+//------------------000------------------------------------------
        if (In [27:25] == 3'b000) 
        begin
             if (In [24:20] == 5'b01000 && In [4] == 1'b0) 
@@ -20,6 +20,7 @@ module encoder (output reg [7:0] Out, input [31:0] In, input reset);
                 default:    Out = 11;   //ADDS shift
                 endcase
             end
+            
             //----------------------------AM3-----------------
             if (In [24] == 1'b1 && In [7] == 1'b1 && In [4] == 1'b1) 
             begin
@@ -38,12 +39,43 @@ module encoder (output reg [7:0] Out, input [31:0] In, input reset);
                 endcase
             end
         end
+        if (In [27:25] == 3'b000 && In [4] == 1'b0)
+        begin
+            case (In [24:20])
+            5'b00000:   Out = 83;   //AND register
+            5'b00001:   Out = 84;   //ANDS register
+            5'b00010:   Out = 85;   //EOR register
+            5'b00011:   Out = 86;   //EORS register
+            5'b00100:   Out = 87;   //SUB register
+            5'b00101:   Out = 88;   //SUBS register
+            5'b00110:   Out = 89;   //RSB register
+            5'b00111:   Out = 90;   //RSBS register
+            5'b01010:   Out = 91;   //ADC register
+            5'b01011:   Out = 92;   //ADCS register
+            5'b01100:   Out = 93;   //SBC register
+            5'b01101:   Out = 94;   //SBCS register
+            5'b01110:   Out = 95;   //RSC register
+            5'b01111:   Out = 96;   //RSCS register
+            5'b10000:   Out = 97;   //TST register
+            5'b10010:   Out = 98;   //TEQ register
+            5'b10100:   Out = 99;   //CMP register
+            5'b10110:   Out = 100;   //CMN register
+            5'b11000:   Out = 101;   //ORR register
+            5'b11001:   Out = 102;   //ORRS register
+            5'b11010:   Out = 103;   //MOV register
+            5'b11011:   Out = 104;   //MOVS register
+            5'b11100:   Out = 105;   //BIC register
+            5'b11101:   Out = 106;   //BICS register
+            5'b11110:   Out = 107;   //MVN register
+            5'b11111:   Out = 108;   //MVNS register
+            endcase
+        end
 //------------------001-------------------------------------------
         if (In [27:25] == 3'b001) 
         begin
             case (In [24:20])
-            5'b00000:   Out = 64;   //AND 
-            5'b00001:   Out = 65;   //ANDS
+            5'b00000:   Out = 82;   //AND 
+            5'b00001:   Out = 81;   //ANDS
             5'b00010:   Out = 64;   //EOR
             5'b00011:   Out = 63;   //EORS
             5'b00100:   Out = 62;   //SUB
