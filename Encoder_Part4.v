@@ -82,8 +82,8 @@ module encoder (output reg [7:0] Out, input [31:0] In, input reset);
             5'b00101:   Out = 61;   //SUBS
             5'b00110:   Out = 60;   //RSB
             5'b00111:   Out = 59;   //RSBS
-            5'b01000:   Out = 58;   //ADD inme
-            5'b01001:   Out = 57;   //ADDS inme
+            5'b01000:   Out = 7;   //ADD inme
+            5'b01001:   Out = 12;   //ADDS inme
             5'b01010:   Out = 56;   //ADC inme
             5'b01011:   Out = 55;   //ADCS inme
             5'b01100:   Out = 54;   //SBC
@@ -92,12 +92,12 @@ module encoder (output reg [7:0] Out, input [31:0] In, input reset);
             5'b01111:   Out = 51;   //RSCS
             5'b10000:   Out = 50;   //TST
             5'b10010:   Out = 49;   //TEQ
-            5'b10100:   Out = 48;   //CMP
+            5'b10100:   Out = 8;   //CMP
             5'b10110:   Out = 47;   //CMN
             5'b11000:   Out = 46;   //ORR
             5'b11001:   Out = 45;   //ORRS
-            5'b11010:   Out = 44;   //MOV
-            5'b11011:   Out = 43;   //MOVS
+            5'b11010:   Out = 9;   //MOV
+            5'b11011:   Out = 13;   //MOVS
             5'b11100:   Out = 42;   //BIC
             5'b11101:   Out = 41;   //BICS
             5'b11110:   Out = 40;   //MVN
@@ -156,8 +156,8 @@ module encoder (output reg [7:0] Out, input [31:0] In, input reset);
         if (In [27:25] == 3'b101)
         begin
             case (In [24])
-            1'b0:   Out = 37;   //B
-            1'b1:   Out = 38;   //BL
+            1'b0:   Out = 14;   //B
+            1'b1:   Out = 15;   //BL
             endcase
         end
     end
