@@ -20,14 +20,14 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
 			
 				case(datatype)
 				
-					2'b00:             //00: byte
+					2'b01:             //01: byte
 					begin 
 						DataOut[31:8] = 24'b000000000000000000000000;
 						DataOut[7:0] = Mem[Address];
 						#1 MOC = 1'b1;
 					end
 					
-					2'b01:             //01: halfword
+					2'b00:             //00: halfword
 					begin 
 						DataOut[31:16] = 16'b0000000000000000;
 						DataOut[15:8] = Mem[Address];
@@ -43,19 +43,19 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
 						DataOut[7:0] = Mem[Address + 3];
 						#1 MOC = 1'b1;
 					end
-					2'b11:            //11:doubleword
-				        begin 
-						DataOut[31:24] = Mem[Address];
-						DataOut[23:16] = Mem[Address+1];
-                  				DataOut[15:8] = Mem[Address+2];
-						DataOut[7:0] = Mem[Address+3];
-                    				#2                                   //delay para darle tiempo al data bus
-                    				DataOut[31:24] = Mem[Address+4];
-						DataOut[23:16] = Mem[Address+5];
-                    				DataOut[15:8] = Mem[Address+6];
-                    				DataOut[7:0] = Mem[Address+7];
-                    				#1 MOC = 1'b1;
-					end
+					// 2'b11:            //11:doubleword
+				    //     begin 
+					// 	DataOut[31:24] = Mem[Address];
+					// 	DataOut[23:16] = Mem[Address+1];
+					// 	DataOut[15:8] = Mem[Address+2];
+					// 	DataOut[7:0] = Mem[Address+3];
+					// 	#2                                   //delay para darle tiempo al data bus
+					// 	DataOut[31:24] = Mem[Address+4];
+					// 	DataOut[23:16] = Mem[Address+5];
+					// 	DataOut[15:8] = Mem[Address+6];
+					// 	DataOut[7:0] = Mem[Address+7];
+					// 	#1 MOC = 1'b1;
+					// end
 					
 				endcase
 				
@@ -88,19 +88,19 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
 						#1 MOC = 1'b1;
 					end
 					
-					2'b11:           //11: DoubleWord 
-					begin 
-						Mem[Address] = DataIn[31:24];
-                    				Mem[Address+1] = DataIn[23:16];
-                    				Mem[Address+2] = DataIn[15:8];
-                    				Mem[Address+3] = DataIn[7:0];
-                    				#2
-                    				Mem[Address+4] = DataIn[31:24];
-                    				Mem[Address+5] = DataIn[23:16];
-                    				Mem[Address+6] = DataIn[15:8];
-                    				Mem[Address+7] = DataIn[7:0];
-                    				#1 MOC = 1'b1;
-					end
+					// 2'b11:           //11: DoubleWord 
+					// begin 
+					// 	Mem[Address] = DataIn[31:24];
+                    // 				Mem[Address+1] = DataIn[23:16];
+                    // 				Mem[Address+2] = DataIn[15:8];
+                    // 				Mem[Address+3] = DataIn[7:0];
+                    // 				#2
+                    // 				Mem[Address+4] = DataIn[31:24];
+                    // 				Mem[Address+5] = DataIn[23:16];
+                    // 				Mem[Address+6] = DataIn[15:8];
+                    // 				Mem[Address+7] = DataIn[7:0];
+                    // 				#1 MOC = 1'b1;
+					// end
 					
 				endcase 
 				

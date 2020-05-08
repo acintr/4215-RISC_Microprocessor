@@ -204,7 +204,7 @@ endmodule
 // 		end 
 // 	end
 // endmodule
-module IR_2_UWBDL (output reg U, W, B, D, L, input [31:0] IR, input [5:0] state);
+module MOP_Decoder (output reg U, D, L, output reg [1:0] WB, input [31:0] IR, input [5:0] state);
     always @ (IR, state)
     begin
         U = IR[23]; // Unsigned
@@ -215,67 +215,73 @@ module IR_2_UWBDL (output reg U, W, B, D, L, input [31:0] IR, input [5:0] state)
                     case(IR[6:5])
                         2'b01:
                             begin
-                                W = 1'b0;
-                                B = 1'b0;
+                                // W = 1'b0;
+                                // B = 1'b0;
                                 D = 1'b0;
                                 L = 1'b0;
+                                WB = 2'b00;
                             end
                         2'b10:
                             begin
-                                W = 1'b0;
-                                B = 1'b0;
+                                // W = 1'b0;
+                                // B = 1'b0;
                                 D = 1'b1;
                                 L = 1'b1;
+                                WB = 2'b00;
                             end
                         2'b11:
                             begin
-                                W = 1'b0;
-                                B = 1'b0;
+                                // W = 1'b0;
+                                // B = 1'b0;
                                 D = 1'b1;
                                 L = 1'b0;
+                                WB = 2'b00;
                             end
                     endcase
                 else
                     case(IR[6:5])
                         2'b01:
                             begin
-                                W = 1'b0;
-                                B = 1'b0;
+                                // W = 1'b0;
+                                // B = 1'b0;
                                 D = 1'b0;
                                 L = 1'b1;
+                                WB = 2'b00;
                             end
                         2'b10:
                             begin
-                                W = 1'b0;
-                                B = 1'b1;
+                                // W = 1'b0;
+                                // B = 1'b1;
                                 D = 1'b0;
                                 L = 1'b1;
+                                WB = 2'b01;
                             end
                         2'b11:
                             begin
-                                W = 1'b0;
-                                B = 1'b0;
+                                // W = 1'b0;
+                                // B = 1'b0;
                                 D = 1'b0;
                                 L = 1'b1;
+                                WB = 2'b00;
                             end
                     endcase
             end
         end
         else if (IR[27:26] == 2'b01)    // Addressing Mode 2
         begin
-            B = IR[22]; // Byte
-            W = ~B;     // Word
+            WB[0] = IR[22]; // Byte
+            WB[1] = ~WB[0];     // Word
             D = 1'b0;
             L = IR[20];
         end
         else if (state == 6'b000000 || state == 6'b000001 || state == 6'b000010 || state == 6'b000011) // fetch
         begin
-            B = 0;
-            W = 1;
+            // B = 0;
+            // W = 1;
             D = 0;
             L = 0;
+            WB = 2'b10;
         end
-        // falta Addressing Mode 4
     end
 endmodule
 
@@ -900,7 +906,7 @@ input [1:0] MB_IN, input [1:0] MC_IN, input [4:0] OP_IN, input [5:0] CR_IN, inpu
 endmodule
 
 // ControlUnit - needs implementation update
-module ControlUnit (output [5:0] state, output [5:0] CR, output [4:0] OP, output [2:0] N, S, output [1:0] MA, MC, MB,
+module ControlUnit (output [5:0] state, output [5:0] CR, output [4:0] OP, output [2:0] N, S, output [1:0] MA, MC, MB, WB,
                     output FR, RF, IR, MAR, MDR, ReadWrite, MOV, MD, ME, Inv,
                     input [31:0] InstructionRegister, input MOC, Cond, c2, c3, Clk, reset);
     wire [5:0] EuMux0, uMux1, CRuMux2, IncruMux3, uMux_2_uStr, Incr;
@@ -914,7 +920,7 @@ module ControlUnit (output [5:0] state, output [5:0] CR, output [4:0] OP, output
     wire [4:0] uOP;
     wire [2:0] uN, uS;
     wire [1:0] uMA, uMB, uMC;
-    wire U, W, B, D, L;
+    wire U, D, L, idk1, idk2, idk3;
 
     assign Inv = invCR;
     assign CR = CRuMux2;
@@ -924,12 +930,12 @@ module ControlUnit (output [5:0] state, output [5:0] CR, output [4:0] OP, output
     assign state = current_state;
     Encoder encoder (EuMux0, InstructionRegister, reset);
     // AddressModeDetector amd ();                                                  //Please help here if possible, no supe bregar
-    IR_2_UWBDL idk_what_its_called (InstructionRegister, U, W, B, D, L, current_state);
+    MOP_Decoder mopd (InstructionRegister, U, D, L, WB, current_state);
     NextStateAddressSelector nsas (NSAS_2_uMux, N_2_NSAS, Sts);
     Adder adder (Incr, uMux_2_uStr);
     IncrementRegister incrReg (IncruMux3, Incr, Clk);
     Inverter inverter (Sts, cMux_2_inv, Inv);
-    InverterMux cMux (cMux_2_inv, MOC, Cond, c2, c3, S_2_cMux);
+    InverterMux cMux (cMux_2_inv, MOC, Cond, U, D, L, idk1, idk2, idk3, S_2_cMux);
     MicrostoreMux uMux (uMux_2_uStr, EuMux0, uMux1, CRuMux2, IncruMux3, NSAS_2_uMux);
     Microstore uStore (state_uStr_2_CR, uFR, uRF, uIR, uMAR, uMDR, uReadWrite, uMOV, uMC, uMD, uME, 
                         uInv, uMA, uMB, uOP, uCR, uN, uS, uMux_2_uStr);
@@ -940,61 +946,61 @@ module ControlUnit (output [5:0] state, output [5:0] CR, output [4:0] OP, output
     
 endmodule
 
-module CUTest;
+// module CUTest;           THIS TEST MODULE IS OBSOLETE
 
-    reg [31:0] InstReg;
-    reg MOC, Cond, c2, c3, Clk, reset;
-    wire [5:0] CR;
-    wire [4:0] OP;
-    wire [2:0] N;
-    wire [1:0] MA, MB, S;
-    wire FR, RF, IR, MAR, MDR, ReadWrite, MOV, MC, MD, ME, Inv;
-    wire [5:0] State; 
-    ControlUnit cu (State, CR, OP, N, MA, MB, S, FR, RF, IR, MAR, MDR, ReadWrite, MOV, MC, MD, ME, Inv, InstReg, MOC, Cond, c2, c3, Clk, reset);  
+//     reg [31:0] InstReg;
+//     reg MOC, Cond, c2, c3, Clk, reset;
+//     wire [5:0] CR;
+//     wire [4:0] OP;
+//     wire [2:0] N;
+//     wire [1:0] MA, MB, S;
+//     wire FR, RF, IR, MAR, MDR, ReadWrite, MOV, MC, MD, ME, Inv;
+//     wire [5:0] State; 
+//     ControlUnit cu (State, CR, OP, N, MA, MB, S, FR, RF, IR, MAR, MDR, ReadWrite, MOV, MC, MD, ME, Inv, InstReg, MOC, Cond, c2, c3, Clk, reset);  
 
-    initial #200 $finish;
+//     initial #200 $finish;
 
-    initial begin
-        Clk = 1'b0;
-        repeat (1000) #1 Clk = ~Clk;
-    end
+//     initial begin
+//         Clk = 1'b0;
+//         repeat (1000) #1 Clk = ~Clk;
+//     end
 
-    initial begin
-        MOC = 0;
-        repeat (1000) #3 MOC = ~MOC;
-    end
+//     initial begin
+//         MOC = 0;
+//         repeat (1000) #3 MOC = ~MOC;
+//     end
 
-    initial begin
-        $display("STATE |   FR      RF      IR      MAR     MDR     R/W     MOV     MA      MB      MC      MD      ME      OP                      TIME");
-        $monitor("%d    |   %b       %b       %b       %b       %b       %b       %b       %b      %b      %b       %b       %b       %b%d", State, FR, RF, IR, MAR, MDR, ReadWrite, MOV, MA, MB, MC, MD, ME, OP, $time);
-    end
+//     initial begin
+//         $display("STATE |   FR      RF      IR      MAR     MDR     R/W     MOV     MA      MB      MC      MD      ME      OP                      TIME");
+//         $monitor("%d    |   %b       %b       %b       %b       %b       %b       %b       %b      %b      %b       %b       %b       %b%d", State, FR, RF, IR, MAR, MDR, ReadWrite, MOV, MA, MB, MC, MD, ME, OP, $time);
+//     end
 
-    initial begin fork
-    #1 reset = 1;
-    #1 Cond = 1;
-    #3 reset = 0;
-    // #1 MOC = 1;
-    // INSTRUCTION CODE                                  INSTRUCTION         STATES         
-    #2 InstReg = 32'b11100000100000100101000000000001; // ADD R-R            STATE = 10
+//     initial begin fork
+//     #1 reset = 1;
+//     #1 Cond = 1;
+//     #3 reset = 0;
+//     // #1 MOC = 1;
+//     // INSTRUCTION CODE                                  INSTRUCTION         STATES         
+//     #2 InstReg = 32'b11100000100000100101000000000001; // ADD R-R            STATE = 10
 
-    #14 InstReg = 32'b11100010100000000001000000101000; // ADD immediate     STATE = 11
+//     #14 InstReg = 32'b11100010100000000001000000101000; // ADD immediate     STATE = 11
 
-    #26 InstReg = 32'b11100000100000000001000100000010; // ADD shift         STATE = 12
+//     #26 InstReg = 32'b11100000100000000001000100000010; // ADD shift         STATE = 12
     
-    #38 InstReg = 32'b11100011010000000001000000101000; // CMP               STATE = 13
+//     #38 InstReg = 32'b11100011010000000001000000101000; // CMP               STATE = 13
 
-    #50 InstReg = 32'b11100011101000000001000000101000; // MOV               STATE = 14
+//     #50 InstReg = 32'b11100011101000000001000000101000; // MOV               STATE = 14
 
-    #62 InstReg = 32'b11100101000101100101000000010100; // LDR               STATE = 20, 21, 22, 23
+//     #62 InstReg = 32'b11100101000101100101000000010100; // LDR               STATE = 20, 21, 22, 23
 
-    #84 InstReg = 32'b11100111100001100101100011101100; // STR              STATE = 25, 26, 27, 28
+//     #84 InstReg = 32'b11100111100001100101100011101100; // STR              STATE = 25, 26, 27, 28
 
-    #104 InstReg = 32'b11101010111111111111111111111100; // B                STATE = 30
+//     #104 InstReg = 32'b11101010111111111111111111111100; // B                STATE = 30
 
-    // #1 InstReg = 32'b11101010111111111111111111111100;   // FOR TESTING A SINGLE INSTRUCTION
+//     // #1 InstReg = 32'b11101010111111111111111111111100;   // FOR TESTING A SINGLE INSTRUCTION
 
-    join
-    end
+//     join
+//     end
 
 
-endmodule
+// endmodule
