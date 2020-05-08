@@ -58,12 +58,12 @@ module encoder (output reg [7:0] Out, input [31:0] In, input reset);
             5'b01111:   Out = 96;   //RSCS register
             5'b10000:   Out = 97;   //TST register
             5'b10010:   Out = 98;   //TEQ register
-            5'b10100:   Out = 99;   //CMP register
+            5'b10100:   Out = 55;   //CMP register
             5'b10110:   Out = 100;   //CMN register
             5'b11000:   Out = 101;   //ORR register
             5'b11001:   Out = 102;   //ORRS register
-            5'b11010:   Out = 103;   //MOV register
-            5'b11011:   Out = 104;   //MOVS register
+            5'b11010:   Out = 56;   //MOV register
+            5'b11011:   Out = 57;   //MOVS register
             5'b11100:   Out = 105;   //BIC register
             5'b11101:   Out = 106;   //BICS register
             5'b11110:   Out = 107;   //MVN register
@@ -84,8 +84,8 @@ module encoder (output reg [7:0] Out, input [31:0] In, input reset);
             5'b00111:   Out = 59;   //RSBS
             5'b01000:   Out = 7;   //ADD inme
             5'b01001:   Out = 12;   //ADDS inme
-            5'b01010:   Out = 56;   //ADC inme
-            5'b01011:   Out = 55;   //ADCS inme
+            5'b01010:   Out = 110;   //ADC inme
+            5'b01011:   Out = 109;   //ADCS inme
             5'b01100:   Out = 54;   //SBC
             5'b01101:   Out = 53;   //SBCS
             5'b01110:   Out = 52;   //RSC
