@@ -250,7 +250,7 @@ endmodule
 
 module Microstore (output reg [5:0] state_out, output reg FR, RF, IR, MAR, MDR, ReadWrite, MOV, MD, ME, Inv, output reg [1:0] MA, 
 output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] CR, 
-output reg [2:0] N, output reg [1:0] S, input [5:0] state);
+		   output reg [2:0] N, output reg [1:0] S, output reg [1:0] DT, input [5:0] state);
     always @ (state) begin
         case(state)
             6'b000000: 
@@ -272,6 +272,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     CR = 6'b000000;
                     N = 3'b011;
                     S = 2'b00;
+		    DT = 2'b10;
                 end
             6'b000001:
                 begin
@@ -292,6 +293,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     CR = 6'b000000;
                     N = 3'b011;
                     S = 2'b00;
+	            DT = 2'b10;
                 end
             6'b000010:
                 begin
@@ -312,6 +314,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     CR = 6'b000000;
                     N = 3'b011;
                     S = 2'b00;
+		    DT = 2'b10;
                 end
             6'b000011:
                 begin
@@ -332,6 +335,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     CR = 6'b000011;
                     N = 3'b101;
                     S = 2'b00;
+		    DT = 2'b10;
                 end
             6'b000100:
                 begin
@@ -351,7 +355,8 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     Inv = 0;
                     CR = 6'b000001;
                     N = 3'b100;
-                    S = 2'b01;
+                    S = 2'b01; 
+		    DT = 2'b10;
                 end
             6'b001010:
                 begin
@@ -372,6 +377,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     CR = 6'b000001;
                     N = 3'b010;
                     S = 2'b00;
+		    DT = 2'b10;
                 end
             6'b001011:
                 begin
@@ -391,7 +397,8 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     Inv = 0;
                     CR = 6'b000001;
                     N = 3'b010;
-                    S = 2'b00;
+                    S = 2'b00; 
+		    DT = 2'b10;
                 end
             6'b001100:
                 begin
@@ -412,6 +419,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     CR = 6'b000001;
                     N = 3'b010;
                     S = 2'b00;
+		    DT = 2'b10;
                 end
             6'b001101:
                 begin
@@ -432,6 +440,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     CR = 6'b000001;
                     N = 3'b010;
                     S = 2'b00;
+		    DT = 2'b10;
                 end
             6'b001110:
                 begin
@@ -452,6 +461,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     CR = 6'b000001;
                     N = 3'b010;
                     S = 2'b00;
+		    DT = 2'b10;
                 end
 	    6'b001111: 
 		begin 
@@ -472,6 +482,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     CR = 6'b000001;
                     N = 3'b010;
                     S = 2'b00;
+		    DT = 2'b10;
                 end
 	    6'b010000: 
 		begin 
@@ -492,6 +503,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     CR = 6'b000001;
                     N = 3'b010;
                     S = 2'b00;
+		    DT = 2'b10;
                 end
 	    6'b010001: 
 		begin 
@@ -512,6 +524,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     CR = 6'b000001;
                     N = 3'b010;
                     S = 2'b00;
+		    DT = 2'b10;
                 end
 	    6'b010010: 
 		begin 
@@ -532,6 +545,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     CR = 6'b000001;
                     N = 3'b010;
                     S = 2'b00;
+		    DT = 2'b10;
                 end
             6'b010100:
                 begin
@@ -552,6 +566,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     CR = 6'b000000;
                     N = 3'b011;
                     S = 2'b00;
+		    DT = 2'b10;
                 end
             6'b010101:
                 begin
@@ -572,6 +587,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     CR = 6'b000000;
                     N = 3'b011;
                     S = 2'b00;
+		    DT = 2'b10;
                 end
             6'b010110:
                 begin
@@ -592,6 +608,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     CR = 6'b010110;
                     N = 3'b101;
                     S = 2'b00;
+		    DT = 2'b10;
                 end
             6'b010111:
                 begin
@@ -612,6 +629,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     CR = 6'b000001;
                     N = 3'b010;
                     S = 2'b00;
+		    DT = 2'b10;
                 end
             6'b011001:
                 begin
@@ -632,6 +650,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     CR = 6'b000000;
                     N = 3'b011;
                     S = 2'b00;
+		    DT = 2'b10;
                 end
             6'b011010:
                 begin
@@ -652,6 +671,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     CR = 6'b000000;
                     N = 3'b011;
                     S = 2'b00;
+		    DT = 2'b10;
                 end
             6'b011011:
                 begin
@@ -672,6 +692,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     CR = 6'b000000;
                     N = 3'b011;
                     S = 2'b00;
+		    DT = 2'b10;
                 end
             6'b011100:
                 begin
@@ -692,6 +713,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     CR = 6'b011100;
                     N = 3'b001;
                     S = 2'b00;
+		    DT = 2'b10;
                 end
             6'b011110:
                 begin
@@ -712,6 +734,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     CR = 6'b000001;
                     N = 3'b010;
                     S = 2'b00;
+		    DT = 2'b10;
                 end
             default:
                 begin 
@@ -732,6 +755,7 @@ output reg [2:0] N, output reg [1:0] S, input [5:0] state);
                     CR = 6'b000000;
                     N = 3'b000;
                     S = 2'b00;
+		    DT = 2'b10;
                 end
         endcase
         state_out = state;
