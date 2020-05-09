@@ -1,5 +1,5 @@
 // N Z C V
-module ConditionTester (output cond, input [3:0] cond_code, input N, Z, C, V);
+module ConditionTester (output reg cond, input [3:0] cond_code, input N, Z, C, V);
     always @ (cond_code, N, Z, C, V)
     begin
         cond = 0;
