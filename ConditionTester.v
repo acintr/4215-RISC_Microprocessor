@@ -22,3 +22,4 @@ module ConditionTester (output cond, input [3:0] cond_code, input N, Z, C, V);
             default: cond = 0;
         endcase
     end
+endmodule
