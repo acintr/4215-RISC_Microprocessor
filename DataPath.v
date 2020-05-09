@@ -1509,37 +1509,45 @@ endmodule
 /**********************************************************************
                             DATA PATH
 ***********************************************************************/
-// module DataPath (output reg [31:0] PC, MAR, R1, R2, R3, R5, input Clk);
-
-// wire [31:0] ir_bus, data_out, data_in, alu_bus, mdr_bus, rfpb_bus; // Busses
-// wire [31:0] rfpa_alu, muxb_alu, shifter_muxb, mar_ram, muxe_mdr; // 1-to-1
-// wire [4:0] muxd_alu;
-// wire [3:0] muxa_rfa, muxc_rfc;
-// wire alu_fr_N, alu_fr_Z, alu_fr_C, alu_fr_V, fr_cond_N, fr_cond_Z, fr_cond_C, fr_cond_V;    // ALU to Flag Register & Flag Register to ConditionTester
-
+module DataPath (output reg [31:0] PC, MAR, R1, R2, R3, R5, input Clk);
+    assign in_1 [3:0] = 4'b1111; //
+    assign in_0 [3:0] = 4'b0000; //
+    assign in_2 [3:0] = 4'b1110; //
+    wire [31:0] ir_bus, data_out, data_in, alu_bus, mdr_bus, rfpb_bus; // Busses
+    wire [31:0] rfpa_alu, muxb_alu, shifter_muxb, mar_ram, muxe_mdr; // 1-to-1
+    wire [4:0] muxd_alu;
+    wire alu_fr_N, alu_fr_Z, alu_fr_C, alu_fr_V, fr_cond_N, fr_cond_Z, fr_cond_alu_C, fr_cond_V;    // ALU to Flag Register & Flag Register to ConditionTester
+    wire [3:0] in_1, in_0, in_2;//bytes fijos
+    wire [3:0] muxa_rfa, muxc_rfc;
 // // Control Signals
-// wire fr_ld, rf_ld, ir_ld, mar_ld, mdr_ld, rw, mov, md, me;
-// wire [1:0] ma, mb, mc;
-// wire [4:0] op;
-// // wire [?:0] STATE;
+    wire fr_ld, rf_ld, ir_ld, mar_ld, mdr_ld, rw, mov, md, me;
+    //los añadí
+    wire cond_cu, ram_moc, inv, rst;//control unit y ram
+    wire [1:0] wb;//control unit y ram
+    wire [2:0] n, s;//control unit
+    wire [5:0] cr; //control unit
+    //------
+    wire [1:0] ma, mb, mc;
+    wire [4:0] op;
+    wire [5:0] STATE; //por ahora 6 bits
+    
+    ALU_32bit alu (alu_bus, alu_fr_N, alu_fr_Z, alu_fr_C, alu_fr_V, rfpa_alu, muxb_alu, muxd_alu, fr_cond_alu_C);
+    ConditionTester condTester (cond_cu, ir_bus [31:28], fr_cond_N, fr_cond_Z, fr_cond_alu_C, fr_cond_V);
+    Flag_Register flagReg (fr_cond_N, fr_cond_Z, fr_cond_alu_C, fr_cond_V, alu_fr_N, alu_fr_Z, alu_fr_C, alu_fr_V, fr_ld, Clk);
+    IR ir (ir_bus, data_out, ir_ld, Clk); 
+    MAR mar (mar_ram, alu_bus, mar_ld, Clk);
+    MDR mdr (data_in, muxe_mdr, mdr_ld, Clk);
+    Mux_A muxa (muxa_rfa, ir_bus [19:16], ir_bus [15:12], in_1, in_0, ma);
+    Mux_B muxb (muxb_alu, rfpb_bus, shifter_muxb, data_in, in_0);
+    Mux_C muxc (muxc_rfc, ir_bus [15:12], in_1, n_2, ir_bus [19:16], mc);
+    Mux_D muxd (muxd_alu, ir_bus [24:21], op, md);
+    Mux_E muxe (muxe_mdr, data_out, alu_bus, me);
+    ram512x8 ram (ram_moc, data_out, mov, rw, mar_ram, data_in, wb);
+    RegisterFile regFile (rfpa_alu, rfpb_bus, data_in, ????, alu_bus, muxc_rfc, muxa_rfa, ir_bus [3:0], rf_ld, Clk);//output [31:0] PA, PB, ProgamCounter, input [31:0] PC, input [3:0] C, input [3:0] A, input [3:0] B, input Ld, Clk);
+    Shifter shifter (shifter_muxb, alu_fr_C, rfpb_bus, ir_bus, fr_cond_alu_C);
+    ControlUnit cu (STATE, cr, op, n, s, ma, mc, mb, wb, fr_ld, rf_ld, ir_ld, mar_ld, mdr_ld, rw, mov, md, me, inv, ir_bus, ram_moc, cond_cu, ???, ???, Clk, rst);//output [5:0] state, output [5:0] CR, output [4:0] OP, output [2:0] N, S, output [1:0] MA, MC, MB, WB,output FR, RF, IR, MAR, MDR, ReadWrite, MOV, MD, ME, Inv,input [31:0] InstructionRegister, input MOC, Cond, c2, c3, Clk, reset);
 
-// ALU_32bit alu ();
-// ConditionTester condTester ();
-// Flag_Register flagReg ();
-// IR ir ();
-// MAR mar ();
-// MDR mdr ();
-// Mux_A muxa ();
-// Mux_B muxb ();
-// Mux_C muxc ();
-// Mux_D muxd ();
-// Mux_E muxe ();
-// ram512x8 ram ();
-// RegisterFile regFile ();
-// Shifter shifter ();
-// ControlUnit cu ();
-
-// endmodule
+endmodule
 
 
 /**********************************************************************
