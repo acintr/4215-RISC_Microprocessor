@@ -220,12 +220,12 @@ endmodule
 /**********************************************************************
                             MUX D
 ***********************************************************************/
-module Mux_D (output reg [3:0] Out_D, input [3:0] In_D0, In_D1, input S_D);
+module Mux_D (output reg [4:0] Out_D, input [4:0] In_D0, input [3:0] In_D1, input In_D2, S_D);
     always @ (S_D)
     begin
         case (S_D)
         1'b0:  Out_D = In_D0;
-        1'b1:  Out_D = In_D1;
+        1'b1:  Out_D = {In_D2, In_D1};
         endcase
     end
 endmodule
@@ -1513,11 +1513,13 @@ module DataPath (output reg [31:0] PC, MAR, R1, R2, R3, R5, input Clk);
     assign in_1 [3:0] = 4'b1111; //
     assign in_0 [3:0] = 4'b0000; //
     assign in_2 [3:0] = 4'b1110; //
+    assign in_3 = 1'b0;
     wire [31:0] ir_bus, data_out, data_in, alu_bus, mdr_bus, rfpb_bus; // Busses
     wire [31:0] rfpa_alu, muxb_alu, shifter_muxb, mar_ram, muxe_mdr; // 1-to-1
     wire [4:0] muxd_alu;
     wire alu_fr_N, alu_fr_Z, alu_fr_C, alu_fr_V, fr_cond_N, fr_cond_Z, fr_cond_alu_C, fr_cond_V;    // ALU to Flag Register & Flag Register to ConditionTester
     wire [3:0] in_1, in_0, in_2;//bytes fijos
+    wire in_3;
     wire [3:0] muxa_rfa, muxc_rfc;
 // // Control Signals
     wire fr_ld, rf_ld, ir_ld, mar_ld, mdr_ld, rw, mov, md, me;
@@ -1540,7 +1542,7 @@ module DataPath (output reg [31:0] PC, MAR, R1, R2, R3, R5, input Clk);
     Mux_A muxa (muxa_rfa, ir_bus [19:16], ir_bus [15:12], in_1, in_0, ma);
     Mux_B muxb (muxb_alu, rfpb_bus, shifter_muxb, data_in, in_0);
     Mux_C muxc (muxc_rfc, ir_bus [15:12], in_1, n_2, ir_bus [19:16], mc);
-    Mux_D muxd (muxd_alu, ir_bus [24:21], op, md);
+    Mux_D muxd (muxd_alu, ir_bus [24:21], op, in_3, md);
     Mux_E muxe (muxe_mdr, data_out, alu_bus, me);
     ram512x8 ram (ram_moc, data_out, mov, rw, mar_ram, data_in, wb);
     RegisterFile regFile (rfpa_alu, rfpb_bus, data_in, ????, alu_bus, muxc_rfc, muxa_rfa, ir_bus [3:0], rf_ld, Clk);//output [31:0] PA, PB, ProgamCounter, input [31:0] PC, input [3:0] C, input [3:0] A, input [3:0] B, input Ld, Clk);
