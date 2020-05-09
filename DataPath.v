@@ -1501,8 +1501,8 @@ module ControlUnit (output [5:0] state, output [5:0] CR, output [4:0] OP, output
                         uInv, uMA, uMB, uMC, uOP, uCR, uN, uS, uMux_2_uStr);
     ControlRegister ctrlReg (current_state, FR, RF, IR, MAR, MDR, ReadWrite, MOV, MD, ME, 
                             invCR, MA, MB, MC, OP, CRuMux2, N_2_NSAS, S_2_cMux,
-                            uFR, uRF, uIR, uMAR, uMDR, uReadWrite, uMOV, uMC, uMD, uME, 
-                            uInv, uMA, uMB, uOP, uCR, uN, uS, Clk, state_uStr_2_CR);
+                            uFR, uRF, uIR, uMAR, uMDR, uReadWrite, uMOV, uMD, uME, 
+                            uInv, uMA, uMB, uMC, uOP, uCR, uN, uS, Clk, state_uStr_2_CR);
     
 endmodule
 
