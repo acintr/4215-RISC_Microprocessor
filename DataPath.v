@@ -22,7 +22,7 @@ module ALU_32bit (output reg[31:0] Out, output reg N, Z, C_Out, V, input [31:0] 
         5'b01110:   Out = In_A & ~In_B;         
         5'b01111:   Out = ~In_B;                  
         5'b10000:   Out = In_A;                 
-        5'b10001:   Out = In_A + 4; //{C_Out,Out} = In_A + 4;               
+        5'b10001:   {C_Out,Out} = In_A + 4;               
         5'b10010:   {C_Out,Out} = In_A + In_B + 4;       
         endcase
         //ADD
@@ -85,7 +85,7 @@ module ALU_32bit (output reg[31:0] Out, output reg N, Z, C_Out, V, input [31:0] 
                 else
                     N = 0;
             end
-		$display("ALU IN A = %b %d\nALU IN B = %b %d\nALU OUT = %b %d\nOP = %b\t%d=T", In_A, In_A, In_B, In_B, Out, Out, OP, $time);
+		// $display("ALU IN A = %b %d\nALU IN B = %b %d\nALU OUT = %b %d\nOP = %b\t%d=T", In_A, In_A, In_B, In_B, Out, Out, OP, $time);
     end
 endmodule
 
@@ -122,9 +122,9 @@ endmodule
                             FLAG REGISTER
 ***********************************************************************/
 module Flag_Register (output reg N_out, Z_out, C_out, V_out, input N_in, Z_in, C_in, V_in, FR_Ld, Clk);
-    always @ (posedge Clk)
+    always @ (posedge Clk, FR_Ld, N_in, Z_in, C_in, V_in)
     begin
-        if (FR_Ld == 1'b1)
+        if (FR_Ld == 1'b1 && Clk == 1'b1)
         begin
             N_out = N_in;
             Z_out = Z_in;
@@ -138,9 +138,9 @@ endmodule
                             INSTRUCTION REGISTER
 ***********************************************************************/
 module IR (output reg [31:0] Out_IR, input [31:0] In_IR, input IR_Ld, Clk);
-    always @ (posedge Clk)
+    always @ (posedge Clk, In_IR, IR_Ld)
     begin
-        if (IR_Ld == 1'b1)
+        if (IR_Ld == 1'b1 && Clk == 1'b1)
         begin
         Out_IR = In_IR;
         end
@@ -151,12 +151,13 @@ endmodule
                             MAR
 ***********************************************************************/
 module MAR (output reg [31:0] Out_MAR, input [31:0] In_MAR, input MAR_Ld, Clk);
-    always @ (posedge Clk)
+    always @ (posedge Clk, MAR_Ld, In_MAR)
     begin
-        if (MAR_Ld == 1'b1)
+        if (MAR_Ld == 1'b1 && Clk == 1'b1)
         begin
         Out_MAR = In_MAR;
         end
+		// $display("MARIN = %b\nMAROUT = %b%d=T", In_MAR, Out_MAR, $time);
     end
 endmodule
 
@@ -164,9 +165,9 @@ endmodule
                             MDR
 ***********************************************************************/
 module MDR (output reg [31:0] Out_MDR, input [31:0] In_MDR, input MDR_Ld, Clk);
-    always @ (posedge Clk)
+    always @ (posedge Clk, MDR_Ld, In_MDR)
     begin
-        if (MDR_Ld == 1'b1)
+        if (MDR_Ld == 1'b1 && Clk == 1'b1)
         begin
         Out_MDR = In_MDR;
         end
@@ -201,7 +202,7 @@ module Mux_B (output reg [31:0] Out_B, input [31:0] In_B0, In_B1, In_B2, In_B3, 
         2'b10:  Out_B = In_B2;
         2'b11:  Out_B = In_B3;
         endcase
-		$display("MUXB: IN00 = %b; IN01 = %b; IN10 = %b;\n IN11 = %b; OUT = %b; MB = %b\t%d=T", In_B0, In_B1, In_B2, In_B3, Out_B, S_B, $time);
+		// $display("MUXB: IN00 = %b; IN01 = %b; IN10 = %b;\n IN11 = %b; OUT = %b; MB = %b\t%d=T", In_B0, In_B1, In_B2, In_B3, Out_B, S_B, $time);
     end
 endmodule
 
@@ -217,6 +218,7 @@ module Mux_C (output reg [3:0] Out_C, input [3:0] IReg12_15, Ones, In_C3, IReg16
         2'b10:  Out_C = IReg16_19; 
         2'b11:  Out_C = In_C3;
         endcase
+		$display("MC = %b; Out = %b;\t%d=T", S_C, Out_C, $time);
     end
 endmodule
 
@@ -230,6 +232,7 @@ module Mux_D (output reg [4:0] Out_D, input [3:0] In_D0, input [4:0] In_D1, inpu
         1'b0:  Out_D = 5'b00000 + In_D0;
         1'b1:  Out_D = In_D1;
         endcase
+		$display("MD = %b; Out = %b;\t%d=T", S_D, Out_D, $time);
     end
 endmodule
 
@@ -259,9 +262,9 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
     reg dw;
 	// initial MOC = 1'b0;      //Memory Operation Complete comienza como cero.
 
-	always @ (Address, MOV, ReadWrite)   //Se verifica el modulo con cada cambio en Address, MOV o ReadWrite. 
+	always @ (Address, MOV, ReadWrite, DataIn, datatype)   //Se verifica el modulo con cada cambio en Address, MOV o ReadWrite. 
 	begin 
-		$display("MOV = %b; R/W = %b; DataType = %b; Address = %b %d\t%d=T", MOV, ReadWrite, datatype, Address, Address, $time);
+		// $display("MOV = %b; R/W = %b; DataType = %b; Address = %b %d\t%d=T", MOV, ReadWrite, datatype, Address, Address, $time);
 		MOC = 1'b0;                    //Operacion de Memoria no esta completada. 
 		
 		if(MOV)                         // Si Memory Operation Valid = 0, nada pasa.
@@ -276,6 +279,7 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
 					begin 
 						DataOut[31:8] = 24'b000000000000000000000000;
 						DataOut[7:0] = Mem[Address];
+						// #1
 						MOC = 1'b1;
 					end
 					
@@ -284,6 +288,7 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
 						DataOut[31:16] = 16'b0000000000000000;
 						DataOut[15:8] = Mem[Address];
 						DataOut[7:0] = Mem[Address + 1];
+						// #1
 						MOC = 1'b1;
 					end 
 					
@@ -293,6 +298,7 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
 						DataOut[23:16] = Mem[Address + 1];
 						DataOut[15:8] = Mem[Address + 2];
 						DataOut[7:0] = Mem[Address + 3];
+						// #1
 						MOC = 1'b1;
 					end
 
@@ -304,6 +310,7 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
                             DataOut[23:16] = Mem[Address+5];
                             DataOut[15:8] = Mem[Address+6];
                             DataOut[7:0] = Mem[Address+7];
+							// #1
                             MOC = 1'b1;
                             dw = 0;
                         end
@@ -313,6 +320,7 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
                         	DataOut[23:16] = Mem[Address+1];
                         	DataOut[15:8] = Mem[Address+2];
                         	DataOut[7:0] = Mem[Address+3];
+							// #1
                             MOC = 1'b1;
                             dw = 1;
                         end
@@ -401,7 +409,7 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
 				
 			end
 		end
-		$display("MOC = %b; DataOut = %b;\t%d=T", MOC, DataOut, $time);
+		// $display("MOC = %b; DataOut = %b;\t%d=T", MOC, DataOut, $time);
 	end
 	
 endmodule
@@ -424,7 +432,7 @@ endmodule
 ***********************************************************************/
 // Register
 module Register (output reg [31:0] Q, input [31:0] D, input Ld, Clk);
-    always @ (posedge Clk, posedge Ld)  // Edge trigger
+    always @ (posedge Clk, Q, Ld)  // Edge trigger
         if(Ld == 1 && Clk == 1) begin   // Two-gate Register
             Q = D;
             // $display("New data at register:\nClk = %d      Ld = %b     D = %b      Q = %b        t=%d", Clk, Ld, D, Q, $time);
@@ -849,7 +857,7 @@ module Encoder (output reg [5:0] Out, input [31:0] In, input reset);
             1'b1:   Out = 15;   //BL
             endcase
         end
-		$display("Encoder State = %d\t%d=T", Out, $time);
+		// $display("Encoder State = %d\t%d=T", Out, $time);
     end
 endmodule
 
@@ -924,7 +932,7 @@ module MOP_Decoder (output reg U, D, L, output reg [1:0] WB, input [31:0] IR, in
             L = 0;
             WB = 2'b10;
         end
-		$display("Cajita Magica: U = %b; D = %b; L = %b; WB = %b\t%d=T", U, D, L, WB, $time);
+		// $display("Cajita Magica: U = %b; D = %b; L = %b; WB = %b\t%d=T", U, D, L, WB, $time);
     end
 endmodule
 
@@ -2482,7 +2490,7 @@ module ARM_Micro;
 
 	initial begin
 		Clk = 1'b0;
-		repeat (100) #2 Clk = ~Clk;
+		repeat (100) #5 Clk = ~Clk;
 	end
 
 	initial begin
@@ -2491,8 +2499,8 @@ module ARM_Micro;
 	end
 
 	initial begin fork
-		#4RESET = 1;
-		#8 RESET = 0;
+		RESET = 1;
+		#2 RESET = 0;
 	join
 	end
 
@@ -2506,20 +2514,20 @@ module ARM_Micro;
 		end
 		$fclose(fi);
 
-		dp.ram.Mem[60] = 8'b00000000;
-		dp.ram.Mem[61] = 8'b00000000;
-		dp.ram.Mem[62] = 8'b11111111;
-		dp.ram.Mem[63] = 8'b00000000;
+		dp.ram.Mem[100] = 8'b00000000;
+		dp.ram.Mem[101] = 8'b00000000;
+		dp.ram.Mem[102] = 8'b11111111;
+		dp.ram.Mem[103] = 8'b00000000;
 
-		dp.ram.Mem[64] = 8'b00000000;
-		dp.ram.Mem[65] = 8'b00000000;
-		dp.ram.Mem[66] = 8'b00000000;
-		dp.ram.Mem[67] = 8'b11111111;
+		dp.ram.Mem[104] = 8'b00000000;
+		dp.ram.Mem[105] = 8'b00000000;
+		dp.ram.Mem[106] = 8'b00000000;
+		dp.ram.Mem[107] = 8'b11111111;
 
 		#400
 		Address = 0;
 		$display("\n\n-------------------------MEMORY-------------------------\nAddress   |   Byte0    Byte1    Byte2    Byte3");
-		while (Address < 100) begin
+		while (Address < 600) begin
 			$display("%d| %b %b %b %b", Address, dp.ram.Mem[Address], dp.ram.Mem[Address+1], dp.ram.Mem[Address+2], dp.ram.Mem[Address+3]);
 			Address = Address + 4;
 		end
