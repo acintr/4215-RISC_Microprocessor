@@ -220,12 +220,12 @@ endmodule
 /**********************************************************************
                             MUX D
 ***********************************************************************/
-module Mux_D (output reg [4:0] Out_D, input [3:0] In_D0, input [4:0] In_D1, input S_D);
+module Mux_D (output reg [4:0] Out_D, input [4:0] In_D0, input [3:0] In_D1, input In_D2, S_D);
     always @ (S_D)
     begin
         case (S_D)
-        1'b0:  Out_D = 5'b00000 + In_D0;
-        1'b1:  Out_D = In_D1;
+        1'b0:  Out_D = In_D0;
+        1'b1:  Out_D = {In_D2, In_D1};
         endcase
     end
 endmodule
@@ -253,7 +253,6 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
 	//00: byte(8 bits)   01: half-word(16 bits)   10: word(32 bits)  11: doubleword (64 bits)
 
 	reg [7:0] Mem[0:511];    //512 localizaciones de 1 byte
-    reg dw;
 	initial MOC = 1'b0;      //Memory Operation Complete comienza como cero.
 
 	always @ (Address, MOV, ReadWrite)   //Se verifica el modulo con cada cambio en Address, MOV o ReadWrite. 
@@ -291,28 +290,6 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
 						DataOut[15:8] = Mem[Address + 2];
 						DataOut[7:0] = Mem[Address + 3];
 						#1 MOC = 1'b1;
-					end
-
-                    2'b11:             //11: doubleword
-					begin 
-                        if (dw == 1)
-                        begin
-                            DataOut[31:24] = Mem[Address+4];
-                            DataOut[23:16] = Mem[Address+5];
-                            DataOut[15:8] = Mem[Address+6];
-                            DataOut[7:0] = Mem[Address+7];
-                            #1 MOC = 1'b1;
-                            dw = 0;
-                        end
-                        else
-                        begin
-                        	DataOut[31:24] = Mem[Address];
-                        	DataOut[23:16] = Mem[Address+1];
-                        	DataOut[15:8] = Mem[Address+2];
-                        	DataOut[7:0] = Mem[Address+3];
-                            #1 MOC = 1'b1;
-                            dw = 1;
-                        end
 					end
 					// 2'b11:            //11:doubleword
 				    //     begin 
@@ -359,27 +336,6 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
 						#1 MOC = 1'b1;
 					end
 					
-                    2'b11:             //11: doubleword
-					begin 
-                        if (dw == 1)
-                        begin
-                            Mem[Address+4] = DataIn[31:24];
-                            Mem[Address+5] = DataIn[23:16];
-                            Mem[Address+6] = DataIn[15:8];
-                            Mem[Address+7] = DataIn[7:0];
-                            #1 MOC = 1'b1;
-                            dw = 0;
-                        end
-                        else
-                        begin
-                            Mem[Address+4] = DataIn[31:24];
-                            Mem[Address+5] = DataIn[23:16];
-                            Mem[Address+6] = DataIn[15:8];
-                            Mem[Address+7] = DataIn[7:0];
-                            #1 MOC = 1'b1;
-                            dw = 1;
-                        end
-					end
 					// 2'b11:           //11: DoubleWord 
 					// begin 
 					// 	Mem[Address] = DataIn[31:24];
@@ -400,19 +356,6 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
 		end
 	end
 	
-endmodule
-
-/**********************************************************************
-                            Mux Incrementer
-***********************************************************************/
-module Mux_Incrementer (output reg [3:0] Rout, input [3:0] Rin, input incr);
-    always @ (Rin, incr)
-    begin
-        case(incr)
-            1'b0: Rout = Rin;
-            1'b1: Rout = Rin + 4'b0001;
-        endcase
-    end
 endmodule
 
 /**********************************************************************
@@ -642,7 +585,7 @@ endmodule
 ***********************************************************************/
 module Encoder (output reg [5:0] Out, input [31:0] In, input reset);
     always @ (In, reset)
-    if (reset == 1) Out = 60;
+    if (reset == 1) Out = 0;
     else
     begin
 //------------------000------------------------------------------
@@ -829,21 +772,27 @@ module MOP_Decoder (output reg U, D, L, output reg [1:0] WB, input [31:0] IR, in
                     case(IR[6:5])
                         2'b01:
                             begin
+                                // W = 1'b0;
+                                // B = 1'b0;
                                 D = 1'b0;
                                 L = 1'b0;
                                 WB = 2'b00;
                             end
                         2'b10:
                             begin
+                                // W = 1'b0;
+                                // B = 1'b0;
                                 D = 1'b1;
                                 L = 1'b1;
-                                WB = 2'b11;
+                                WB = 2'b00;
                             end
                         2'b11:
                             begin
+                                // W = 1'b0;
+                                // B = 1'b0;
                                 D = 1'b1;
                                 L = 1'b0;
-                                WB = 2'b11;
+                                WB = 2'b00;
                             end
                     endcase
                 end
@@ -852,18 +801,24 @@ module MOP_Decoder (output reg U, D, L, output reg [1:0] WB, input [31:0] IR, in
                     case(IR[6:5])
                         2'b01:
                             begin
+                                // W = 1'b0;
+                                // B = 1'b0;
                                 D = 1'b0;
                                 L = 1'b1;
                                 WB = 2'b00;
                             end
                         2'b10:
                             begin
+                                // W = 1'b0;
+                                // B = 1'b1;
                                 D = 1'b0;
                                 L = 1'b1;
                                 WB = 2'b01;
                             end
                         2'b11:
                             begin
+                                // W = 1'b0;
+                                // B = 1'b0;
                                 D = 1'b0;
                                 L = 1'b1;
                                 WB = 2'b00;
@@ -881,6 +836,8 @@ module MOP_Decoder (output reg U, D, L, output reg [1:0] WB, input [31:0] IR, in
         end
         else if (state == 6'b000000 || state == 6'b000001 || state == 6'b000010 || state == 6'b000011) // fetch
         begin
+            // B = 0;
+            // W = 1;
             D = 0;
             L = 0;
             WB = 2'b10;
@@ -968,1341 +925,523 @@ input [5:0] EncoderOut, Entryone, ContRegiOut, IncRegiOut, input [1:0] M );
   end 
 endmodule 
 
-module Microstore (output reg [5:0] state_out, output reg FR, RF, IR, MAR, MDR, ReadWrite, MOV, MD, ME, Inv, MINCR, output reg [1:0] MA, 
+module Microstore (output reg [5:0] state_out, output reg FR, RF, IR, MAR, MDR, ReadWrite, MOV, MD, ME, Inv, output reg [1:0] MA, 
 output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] CR, 
 		   output reg [2:0] N, output reg [2:0] S, input [5:0] state);
     always @ (state) begin
-        			case(state)
-	6'b000000:					// STATE 0
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b000000;	// STATE 000000
-        		N = 3'b011;		// Increment
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b000001:					// STATE 1
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 1;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b10;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 1;
-        		ME = 0;
-        		OP = 5'b10000;
-        		Inv = 0;
-        		CR = 6'b000000;	// STATE 000000
-        		N = 3'b011;		// Increment
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b000010:					// STATE 2
-        	begin
-        		FR = 0;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 1;
-        		MOV = 1;
-        		MA = 2'b10;
-        		MB = 2'b00;
-        		MC = 2'b01;
-        		MD = 1;
-        		ME = 0;
-        		OP = 5'b10001;
-        		Inv = 0;
-        		CR = 6'b000000;	// STATE 000000
-        		N = 3'b011;		// Increment
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b000011:					// STATE 3
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 1;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 1;
-        		MOV = 1;
-        		MA = 2'b0;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b000011;	// STATE 000011
-        		N = 3'b101;		// incr/cr
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b000100:					// STATE 4
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b000100;	// STATE 000100
-        		N = 3'b110;		// CR/enc
-        		S = 3'b001;
-        		MINCR = 0;
-        	end
-	6'b000101:					// STATE 5
-        	begin
-        		FR = 0;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b000001;	// STATE 000001
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b000110:					// STATE 6
-        	begin
-        		FR = 0;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b01;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b000001;	// STATE 000001
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b000111:					// STATE 7
-        	begin
-        		FR = 0;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b01;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b000001;	// STATE 000001
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b001000:					// STATE 8
-        	begin
-        		FR = 1;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b01;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b000001;	// STATE 000001
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b001001:					// STATE 9
-        	begin
-        		FR = 0;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b01;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b000001;	// STATE 000001
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b001010:					// STATE 10
-        	begin
-        		FR = 1;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b000001;	// STATE 000001
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b001011:					// STATE 11
-        	begin
-        		FR = 1;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b01;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b000001;	// STATE 000001
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b001100:					// STATE 12
-        	begin
-        		FR = 1;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b01;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b000001;	// STATE 000001
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b001101:					// STATE 13
-        	begin
-        		FR = 1;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b01;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b000001;	// STATE 000001
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b001110:					// STATE 14
-        	begin
-        		FR = 0;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b10;
-        		MB = 2'b01;
-        		MC = 2'b01;
-        		MD = 1;
-        		ME = 0;
-        		OP = 5'b10010;
-        		Inv = 0;
-        		CR = 6'b000001;	// STATE 000001
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b001111:					// STATE 15
-        	begin
-        		FR = 0;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b10;
-        		MB = 2'b11;
-        		MC = 2'b11;
-        		MD = 1;
-        		ME = 0;
-        		OP = 5'b10000;
-        		Inv = 0;
-        		CR = 6'b001110;	// STATE 001110
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b010000:					// STATE 16
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b010010;	// STATE 010010
-        		N = 3'b101;		// incr/CR
-        		S = 3'b010;
-        		MINCR = 0;
-        	end
-	6'b010001:					// STATE 17
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 1;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b01;
-        		MC = 2'b00;
-        		MD = 1;
-        		ME = 0;
-        		OP = 5'b00100;
-        		Inv = 0;
-        		CR = 6'b100100;	// STATE 100100
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b010010:					// STATE 18
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 1;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b01;
-        		MC = 2'b00;
-        		MD = 1;
-        		ME = 0;
-        		OP = 5'b00010;
-        		Inv = 0;
-        		CR = 6'b100100;	// STATE 100100
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b010011:					// STATE 19
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b010101;	// STATE 010101
-        		N = 3'b101;		// incr/CR
-        		S = 3'b010;
-        		MINCR = 0;
-        	end
-	6'b010100:					// STATE 20
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 1;
-        		MDR = 1;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b01;
-        		MC = 2'b00;
-        		MD = 1;
-        		ME = 1;
-        		OP = 5'b00100;
-        		Inv = 0;
-        		CR = 6'b010110;	// STATE 010110
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b010101:					// STATE 21
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 1;
-        		MDR = 1;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b01;
-        		MC = 2'b00;
-        		MD = 1;
-        		ME = 1;
-        		OP = 5'b00010;
-        		Inv = 0;
-        		CR = 6'b000000;	// STATE 000000
-        		N = 3'b011;		// Increment
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b010110:					// STATE 22
-        	begin
-        		FR = 0;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b10;
-        		MC = 2'b10;
-        		MD = 1;
-        		ME = 0;
-        		OP = 5'b01101;
-        		Inv = 0;
-        		CR = 6'b100100;	// STATE 100100
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b010111:					// STATE 23
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 1;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 1;
-        		ME = 0;
-        		OP = 5'b10000;
-        		Inv = 0;
-        		CR = 6'b011001;	// STATE 011001
-        		N = 3'b101;		// incr/CR
-        		S = 3'b010;
-        		MINCR = 0;
-        	end
-	6'b011000:					// STATE 24
-        	begin
-        		FR = 0;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b01;
-        		MC = 2'b10;
-        		MD = 1;
-        		ME = 0;
-        		OP = 5'b00100;
-        		Inv = 0;
-        		CR = 6'b100100;	// STATE 100100
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b011001:					// STATE 25
-        	begin
-        		FR = 0;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b01;
-        		MC = 2'b10;
-        		MD = 1;
-        		ME = 0;
-        		OP = 5'b00010;
-        		Inv = 0;
-        		CR = 6'b100100;	// STATE 100100
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b011010:					// STATE 26
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b011100;	// STATE 011100
-        		N = 3'b101;		// incr/CR
-        		S = 3'b010;
-        		MINCR = 0;
-        	end
-	6'b011011:					// STATE 27
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 1;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 1;
-        		ME = 0;
-        		OP = 5'b00100;
-        		Inv = 0;
-        		CR = 6'b100100;	// STATE 100100
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b011100:					// STATE 28
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 1;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 1;
-        		ME = 0;
-        		OP = 5'b00100;
-        		Inv = 0;
-        		CR = 6'b100100;	// STATE 100100
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b011101:					// STATE 29
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b011111;	// STATE 011111
-        		N = 3'b101;		// incr/CR
-        		S = 3'b010;
-        		MINCR = 0;
-        	end
-	6'b011110:					// STATE 30
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 1;
-        		MDR = 1;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 1;
-        		ME = 1;
-        		OP = 5'b00100;
-        		Inv = 0;
-        		CR = 6'b100000;	// STATE 100000
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b011111:					// STATE 31
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 1;
-        		MDR = 1;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 1;
-        		ME = 1;
-        		OP = 5'b00010;
-        		Inv = 0;
-        		CR = 6'b000000;	// STATE 000000
-        		N = 3'b011;		// Increment
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b100000:					// STATE 32
-        	begin
-        		FR = 0;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b10;
-        		MC = 2'b10;
-        		MD = 1;
-        		ME = 0;
-        		OP = 5'b01101;
-        		Inv = 0;
-        		CR = 6'b100100;	// STATE 100100
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b100001:					// STATE 33
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 1;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 1;
-        		ME = 0;
-        		OP = 5'b10000;
-        		Inv = 0;
-        		CR = 6'b100011;	// STATE 100011
-        		N = 3'b101;		// incr/CR
-        		S = 3'b010;
-        		MINCR = 0;
-        	end
-	6'b100010:					// STATE 34
-        	begin
-        		FR = 0;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b10;
-        		MD = 1;
-        		ME = 0;
-        		OP = 5'b00100;
-        		Inv = 0;
-        		CR = 6'b100100;	// STATE 100100
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b100011:					// STATE 35
-        	begin
-        		FR = 0;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b10;
-        		MD = 1;
-        		ME = 0;
-        		OP = 5'b00010;
-        		Inv = 0;
-        		CR = 6'b000000;	// STATE 000000
-        		N = 3'b011;		// Increment
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b100100:					// STATE 36
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 1;
-        		CR = 6'b101100;	// STATE 101100
-        		N = 3'b101;		// incr/CR
-        		S = 3'b011;
-        		MINCR = 0;
-        	end
-	6'b100101:					// STATE 37
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b101001;	// STATE 101001
-        		N = 3'b101;		// incr/CR
-        		S = 3'b100;
-        		MINCR = 0;
-        	end
-	6'b100110:					// STATE 38
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 1;
-        		MOV = 1;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b100111;	// STATE 100111
-        		N = 3'b011;		// incr
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b100111:					// STATE 39
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 1;
-        		ReadWrite = 1;
-        		MOV = 1;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b100111;	// STATE 100111
-        		N = 3'b101;		// incr/CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b101000:					// STATE 40
-        	begin
-        		FR = 0;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b10;
-        		MC = 2'b00;
-        		MD = 1;
-        		ME = 0;
-        		OP = 5'b01101;
-        		Inv = 0;
-        		CR = 6'b000001;	// STATE 000001
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b101001:					// STATE 41
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 1;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b01;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 1;
-        		ME = 1;
-        		OP = 5'b10000;
-        		Inv = 0;
-        		CR = 6'b101010;	// STATE 101010
-        		N = 3'b011;		// incr
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b101010:					// STATE 42
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 1;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b101011;	// STATE 101011
-        		N = 3'b011;		// incr
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b101011:					// STATE 43
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 1;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 1;
-        		CR = 6'b101011;	// STATE 101011
-        		N = 3'b001;		// 1/CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b101100:					// STATE 44
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b110011;	// STATE 110011
-        		N = 3'b101;		// incr/CR
-        		S = 3'b100;
-        		MINCR = 0;
-        	end
-	6'b101101:					// STATE 45
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 1;
-        		MOV = 1;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b000000;	// STATE 000000
-        		N = 3'b011;		// Increment
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b101110:					// STATE 46
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 1;
-        		ReadWrite = 1;
-        		MOV = 1;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b101110;	// STATE 101110
-        		N = 3'b101;		// incr/CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b101111:					// STATE 47
-        	begin
-        		FR = 0;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b10;
-        		MC = 2'b00;
-        		MD = 1;
-        		ME = 0;
-        		OP = 5'b01101;
-        		Inv = 0;
-        		CR = 6'b000000;	// STATE 000000
-        		N = 3'b011;		// Increment
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b110000:					// STATE 48
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 1;
-        		MOV = 1;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b000000;	// STATE 000000
-        		N = 3'b011;		// Increment
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b110001:					// STATE 49
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 1;
-        		ReadWrite = 1;
-        		MOV = 1;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b0000;
-        		Inv = 0;
-        		CR = 6'b110001;	// STATE 110001
-        		N = 3'b101;		// incr/CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b110010:					// STATE 50
-        	begin
-        		FR = 0;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b10;
-        		MC = 2'b00;
-        		MD = 1;
-        		ME = 0;
-        		OP = 5'b01101;
-        		Inv = 0;
-        		CR = 6'b000001;	// STATE 000001
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 1;
-        	end
-	6'b110011:					// STATE 51
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 1;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b01;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 1;
-        		ME = 1;
-        		OP = 5'b10000;
-        		Inv = 0;
-        		CR = 6'b000000;	// STATE 000000
-        		N = 3'b011;		// Increment
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b110100:					// STATE 52
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 1;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b000000;	// STATE 000000
-        		N = 3'b011;		// increment
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b110101:					// STATE 53
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 1;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b110101;	// STATE 110101
-        		N = 3'b101;		// incr/CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b110110:					// STATE 54
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 1;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b01;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 1;
-        		ME = 1;
-        		OP = 5'b10000;
-        		Inv = 0;
-        		CR = 6'b000000;	// STATE 000000
-        		N = 3'b011;		// increment
-        		S = 3'b000;
-        		MINCR = 1;
-        	end
-	6'b110111:					// STATE 55
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 1;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b000000;	// STATE 000000
-        		N = 3'b011;		// increment
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b111000:					// STATE 56
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 1;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 1;
-        		CR = 6'b111000;	// STATE 111000
-        		N = 3'b001;		// 1/CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b111001:					// STATE 57
-        	begin
-        		FR = 1;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b000001;	// STATE 000001
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b111010:					// STATE 58
-        	begin
-        		FR = 0;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b000001;	// STATE 000001
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b111011:					// STATE 59
-        	begin
-        		FR = 1;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b000001;	// STATE 000001
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b111100:					// STATE 60
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b000000;	// STATE 000000
-        		N = 3'b011;		// increment
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b111101:					// STATE 61
-        	begin
-        		FR = 0;
-        		RF = 1;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b11;
-        		MC = 2'b01;
-        		MD = 1;
-        		ME = 0;
-        		OP = 5'b01101;
-        		Inv = 0;
-        		CR = 6'b000000;	// STATE 000000
-        		N = 3'b010;		// CR
-        		S = 3'b000;
-        		MINCR = 0;
-        	end
-	6'b000000:		// STATE 0
-        	begin
-        		FR = 0;
-        		RF = 0;
-        		IR = 0;
-        		MAR = 0;
-        		MDR = 0;
-        		ReadWrite = 0;
-        		MOV = 0;
-        		MA = 2'b00;
-        		MB = 2'b00;
-        		MC = 2'b00;
-        		MD = 0;
-        		ME = 0;
-        		OP = 5'b00000;
-        		Inv = 0;
-        		CR = 6'b000000;
-        		N = 3'b011;
-        		S = 3'b000;
-        	end
-	endcase
+        case(state)
+            6'b000000: 
+                begin
+                    FR = 0;
+                    RF = 0;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 0; 
+                    MA = 2'b00;
+                    MB = 2'b11;
+                    MC = 2'b01;
+                    MD = 1;
+                    ME = 0;
+                    OP = 5'b01101;
+                    Inv = 0;
+                    CR = 6'b000000;
+                    N = 3'b011;
+                    S = 3'b000;
+		    // DT = 2'b10;
+                end
+            6'b000001:
+                begin
+                    FR = 0;
+                    RF = 0;
+                    IR = 0;
+                    MAR = 1;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 0; 
+                    MA = 2'b10;
+                    MB = 2'b00;
+                    MC = 2'b00;
+                    MD = 1;
+                    ME = 0;
+                    OP = 5'b10000;
+                    Inv = 0;
+                    CR = 6'b000000;
+                    N = 3'b011;
+                    S = 3'b000;
+	            // DT = 2'b10;
+                end
+            6'b000010:
+                begin
+                    FR = 0;
+                    RF = 1;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 1;
+                    MOV = 1; 
+                    MA = 2'b10;
+                    MB = 2'b00;
+                    MC = 2'b01;
+                    MD = 1;
+                    ME = 0;
+                    OP = 5'b10001;
+                    Inv = 0;
+                    CR = 6'b000000;
+                    N = 3'b011;
+                    S = 3'b000;
+		    // DT = 2'b10;
+                end
+            6'b000011:
+                begin
+                    FR = 0;
+                    RF = 0;
+                    IR = 1;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 1;
+                    MOV = 1; 
+                    MA = 2'b00;
+                    MB = 2'b00;
+                    MC = 2'b00;
+                    MD = 0;
+                    ME = 0;
+                    OP = 5'b00000;
+                    Inv = 1;
+                    CR = 6'b000011;
+                    N = 3'b101;
+                    S = 3'b000;
+		    // DT = 2'b10;
+                end
+            6'b000100:
+                begin
+                    FR = 0;
+                    RF = 0;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 0; 
+                    MA = 2'b00;
+                    MB = 2'b00;
+                    MC = 2'b00;
+                    MD = 0;
+                    ME = 0;
+                    OP = 5'b00000;
+                    Inv = 0;
+                    CR = 6'b000001;
+                    N = 3'b100;
+                    S = 3'b001; 
+		    // DT = 2'b10;
+                end
+            6'b001010:
+                begin
+                    FR = 0;
+                    RF = 1;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 0; 
+                    MA = 2'b00;
+                    MB = 2'b00;
+                    MC = 2'b00;
+                    MD = 0;
+                    ME = 0;
+                    OP = 5'b00000;
+                    Inv = 0;
+                    CR = 6'b000001;
+                    N = 3'b010;
+                    S = 3'b000;
+		    // DT = 2'b10;
+                end
+            6'b001011:
+                begin
+                    FR = 0;
+                    RF = 1;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 0; 
+                    MA = 2'b00;
+                    MB = 2'b01;
+                    MC = 2'b00;
+                    MD = 0;
+                    ME = 0;
+                    OP = 5'b00000;
+                    Inv = 0;
+                    CR = 6'b000001;
+                    N = 3'b010;
+                    S = 3'b000; 
+		    // DT = 2'b10;
+                end
+            6'b001100:
+                begin
+                    FR = 0;
+                    RF = 1;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 0; 
+                    MA = 2'b00;
+                    MB = 2'b01;
+                    MC = 2'b00;
+                    MD = 0;
+                    ME = 0;
+                    OP = 5'b00000;
+                    Inv = 0;
+                    CR = 6'b000001;
+                    N = 3'b010;
+                    S = 3'b000;
+		    // DT = 2'b10;
+                end
+            6'b001101:
+                begin
+                    FR = 1;
+                    RF = 0;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 0; 
+                    MA = 2'b00;
+                    MB = 2'b01;
+                    MC = 2'b00;
+                    MD = 0;
+                    ME = 0;
+                    OP = 5'b00000;
+                    Inv = 0;
+                    CR = 6'b000001;
+                    N = 3'b010;
+                    S = 3'b000;
+		    // DT = 2'b10;
+                end
+            6'b001110:
+                begin
+                    FR = 0;
+                    RF = 1;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 0; 
+                    MA = 2'b00;
+                    MB = 2'b01;
+                    MC = 2'b00;
+                    MD = 0;
+                    ME = 0;
+                    OP = 5'b00000;
+                    Inv = 0;
+                    CR = 6'b000001;
+                    N = 3'b010;
+                    S = 3'b000;
+		    // DT = 2'b10;
+                end
+	    6'b001111: 
+		begin 
+                    FR = 1;
+                    RF = 1;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 0; 
+                    MA = 2'b00;
+                    MB = 2'b00;
+                    MC = 2'b00;
+                    MD = 0;
+                    ME = 0;
+                    OP = 5'b00000;
+                    Inv = 0;
+                    CR = 6'b000001;
+                    N = 3'b010;
+                    S = 3'b000;
+		    // DT = 2'b10;
+                end
+	    6'b010000: 
+		begin 
+	            FR = 1;
+                    RF = 1;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 0; 
+                    MA = 2'b00;
+                    MB = 2'b01;
+                    MC = 2'b00;
+                    MD = 0;
+                    ME = 0;
+                    OP = 5'b00000;
+                    Inv = 0;
+                    CR = 6'b000001;
+                    N = 3'b010;
+                    S = 3'b000;
+		    // DT = 2'b10;
+                end
+	    6'b010001: 
+		begin 
+		    FR = 1;
+                    RF = 1;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 0; 
+                    MA = 2'b00;
+                    MB = 2'b01;
+                    MC = 2'b00;
+                    MD = 0;
+                    ME = 0;
+                    OP = 5'b00000;
+                    Inv = 0;
+                    CR = 6'b000001;
+                    N = 3'b010;
+                    S = 3'b000;
+		    // DT = 2'b10;
+                end
+	    6'b010010: 
+		begin 
+	            FR = 1;
+                    RF = 1;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 0; 
+                    MA = 2'b00;
+                    MB = 2'b01;
+                    MC = 2'b00;
+                    MD = 0;
+                    ME = 0;
+                    OP = 5'b00000;
+                    Inv = 0;
+                    CR = 6'b000001;
+                    N = 3'b010;
+                    S = 3'b000;
+		    // DT = 2'b10;
+                end
+            6'b010100:
+                begin
+                    FR = 0;
+                    RF = 0;
+                    IR = 0;
+                    MAR = 1;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 0; 
+                    MA = 2'b00;
+                    MB = 2'b01;
+                    MC = 2'b00;
+                    MD = 1;
+                    ME = 0;
+                    OP = 5'b00100;
+                    Inv = 0;
+                    CR = 6'b000000;
+                    N = 3'b011;
+                    S = 3'b000;
+		    // DT = 2'b10;
+                end
+            6'b010101:
+                begin
+                    FR = 0;
+                    RF = 0;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 1;
+                    MOV = 1; 
+                    MA = 2'b00;
+                    MB = 2'b00;
+                    MC = 2'b00;
+                    MD = 0;
+                    ME = 0;
+                    OP = 5'b00000;
+                    Inv = 0;
+                    CR = 6'b000000;
+                    N = 3'b011;
+                    S = 3'b000;
+		    // DT = 2'b10;
+                end
+            6'b010110:
+                begin
+                    FR = 0;
+                    RF = 0;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 1;
+                    ReadWrite = 1;
+                    MOV = 1; 
+                    MA = 2'b00;
+                    MB = 2'b00;
+                    MC = 2'b00;
+                    MD = 0;
+                    ME = 0;
+                    OP = 5'b00000;
+                    Inv = 1;
+                    CR = 6'b010110;
+                    N = 3'b101;
+                    S = 3'b000;
+		    // DT = 2'b10;
+                end
+            6'b010111:
+                begin
+                    FR = 0;
+                    RF = 1;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 0; 
+                    MA = 2'b00;
+                    MB = 2'b01;
+                    MC = 2'b00;
+                    MD = 1;
+                    ME = 0;
+                    OP = 5'b01101;
+                    Inv = 0;
+                    CR = 6'b000001;
+                    N = 3'b010;
+                    S = 3'b000;
+		    // DT = 2'b10;
+                end
+            6'b011001:
+                begin
+                    FR = 0;
+                    RF = 0;
+                    IR = 0;
+                    MAR = 1;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 0; 
+                    MA = 2'b00;
+                    MB = 2'b00;
+                    MC = 2'b00;
+                    MD = 1;
+                    ME = 0;
+                    OP = 5'b00100;
+                    Inv = 0;
+                    CR = 6'b000000;
+                    N = 3'b011;
+                    S = 3'b000;
+		    // DT = 2'b10;
+                end
+            6'b011010:
+                begin
+                    FR = 0;
+                    RF = 0;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 1;
+                    ReadWrite = 0;
+                    MOV = 0; 
+                    MA = 2'b01;
+                    MB = 2'b00;
+                    MC = 2'b00;
+                    MD = 1;
+                    ME = 1;
+                    OP = 5'b10000;
+                    Inv = 0;
+                    CR = 6'b000000;
+                    N = 3'b011;
+                    S = 3'b000;
+		    // DT = 2'b10;
+                end
+            6'b011011:
+                begin
+                    FR = 0;
+                    RF = 0;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 1; 
+                    MA = 2'b00;
+                    MB = 2'b00;
+                    MC = 2'b00;
+                    MD = 0;
+                    ME = 0;
+                    OP = 5'b00000;
+                    Inv = 0;
+                    CR = 6'b000000;
+                    N = 3'b011;
+                    S = 3'b000;
+		    // DT = 2'b10;
+                end
+            6'b011100:
+                begin
+                    FR = 0;
+                    RF = 0;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 1; 
+                    MA = 2'b00;
+                    MB = 2'b00;
+                    MC = 2'b00;
+                    MD = 0;
+                    ME = 0;
+                    OP = 5'b00000;
+                    Inv = 1;
+                    CR = 6'b011100;
+                    N = 3'b001;
+                    S = 3'b000;
+		    // DT = 2'b10;
+                end
+            6'b011110:
+                begin
+                    FR = 0;
+                    RF = 1;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 0; 
+                    MA = 2'b10;
+                    MB = 2'b01;
+                    MC = 2'b01;
+                    MD = 1;
+                    ME = 0;
+                    OP = 5'b10010;
+                    Inv = 0;
+                    CR = 6'b000001;
+                    N = 3'b010;
+                    S = 3'b000;
+		    // DT = 2'b10;
+                end
+            default:
+                begin 
+                    FR = 0;
+                    RF = 0;
+                    IR = 0;
+                    MAR = 0;
+                    MDR = 0;
+                    ReadWrite = 0;
+                    MOV = 0; 
+                    MA = 2'b00;
+                    MB = 2'b00;
+                    MC = 2'b00;
+                    MD = 0;
+                    ME = 0;
+                    OP = 5'b00000;
+                    Inv = 0;
+                    CR = 6'b000000;
+                    N = 3'b000;
+                    S = 3'b000;
+		    // DT = 2'b10;
+                end
+        endcase
         state_out = state;
     end
 endmodule 
 
-module ControlRegister (output reg [5:0] state, output reg FR, RF, IR, MAR, MDR, ReadWrite, MOV, MD, ME, Inv, MINCR_out, output reg [1:0] MA, 
+module ControlRegister (output reg [5:0] state, output reg FR, RF, IR, MAR, MDR, ReadWrite, MOV, MD, ME, Inv, output reg [1:0] MA, 
 output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] CR, output reg [2:0] N, output reg [2:0] S, 
-input FR_IN, RF_IN, IR_IN, MAR_IN, MDR_IN, ReadWrite_IN, MOV_IN, MD_IN, ME_IN, Inv_IN, MINCR_in, input [1:0] MA_IN, 
+input FR_IN, RF_IN, IR_IN, MAR_IN, MDR_IN, ReadWrite_IN, MOV_IN, MD_IN, ME_IN, Inv_IN, input [1:0] MA_IN, 
 input [1:0] MB_IN, input [1:0] MC_IN, input [4:0] OP_IN, input [5:0] CR_IN, input [2:0] N_IN, input [2:0] S_IN, input Clk, input [5:0] state_in);
     always @ (posedge Clk) begin
         FR = FR_IN;
@@ -2323,13 +1462,12 @@ input [1:0] MB_IN, input [1:0] MC_IN, input [4:0] OP_IN, input [5:0] CR_IN, inpu
         N = N_IN;
         S = S_IN;
         state = state_in;
-        MINCR_out = MINCR_in;
     end
 endmodule
 
 // ControlUnit - needs implementation update
 module ControlUnit (output [5:0] state, output [5:0] CR, output [4:0] OP, output [2:0] N, S, output [1:0] MA, MC, MB, WB,
-                    output FR, RF, IR, MAR, MDR, ReadWrite, MOV, MD, ME, Inv, MINCR,
+                    output FR, RF, IR, MAR, MDR, ReadWrite, MOV, MD, ME, Inv,
                     input [31:0] InstructionRegister, input MOC, Cond, c2, c3, Clk, reset);
     wire [5:0] EuMux0, uMux1, CRuMux2, IncruMux3, uMux_2_uStr, Incr;
     wire [2:0] S_2_cMux, N_2_NSAS;
@@ -2337,7 +1475,7 @@ module ControlUnit (output [5:0] state, output [5:0] CR, output [4:0] OP, output
     wire cMux_2_inv, invCR, Sts, State;
 
     // Microstore to Control Register
-    wire uFR, uRF, uIR, uMAR, uMDR, uReadWrite, uMOV, uMD, uME, uInv, uMINCR;
+    wire uFR, uRF, uIR, uMAR, uMDR, uReadWrite, uMOV, uMD, uME, uInv;
     wire [5:0] uCR, state_uStr_2_CR, current_state;
     wire [4:0] uOP;
     wire [2:0] uN, uS;
@@ -2360,38 +1498,33 @@ module ControlUnit (output [5:0] state, output [5:0] CR, output [4:0] OP, output
     InverterMux cMux (cMux_2_inv, MOC, Cond, U, D, L, idk1, idk2, idk3, S_2_cMux);
     MicrostoreMux uMux (uMux_2_uStr, EuMux0, uMux1, CRuMux2, IncruMux3, NSAS_2_uMux);
     Microstore uStore (state_uStr_2_CR, uFR, uRF, uIR, uMAR, uMDR, uReadWrite, uMOV, uMD, uME, 
-                        uInv, uMINCR, uMA, uMB, uMC, uOP, uCR, uN, uS, uMux_2_uStr);
+                        uInv, uMA, uMB, uMC, uOP, uCR, uN, uS, uMux_2_uStr);
     ControlRegister ctrlReg (current_state, FR, RF, IR, MAR, MDR, ReadWrite, MOV, MD, ME, 
-                            invCR, MINCR, MA, MB, MC, OP, CRuMux2, N_2_NSAS, S_2_cMux,
+                            invCR, MA, MB, MC, OP, CRuMux2, N_2_NSAS, S_2_cMux,
                             uFR, uRF, uIR, uMAR, uMDR, uReadWrite, uMOV, uMD, uME, 
-                            uInv, uMINCR, uMA, uMB, uMC, uOP, uCR, uN, uS, Clk, state_uStr_2_CR);
+                            uInv, uMA, uMB, uMC, uOP, uCR, uN, uS, Clk, state_uStr_2_CR);
     
 endmodule
 
 /**********************************************************************
                             DATA PATH
 ***********************************************************************/
-module DataPath (output reg [31:0] PC, MAR, R1, R2, R3, R5, output [31:0] IR, input Clk, RESET);
-    
-    // assign in_3 = 1'b0;
+module DataPath (output reg [31:0] PC, MAR, R1, R2, R3, R5, input Clk);
+    assign in_1 [3:0] = 4'b1111; //
+    assign in_0 [3:0] = 4'b0000; //
+    assign in_2 [3:0] = 4'b1110; //
+    assign in_3 = 1'b0;
     wire [31:0] ir_bus, data_out, data_in, alu_bus, mdr_bus, rfpb_bus; // Busses
     wire [31:0] rfpa_alu, muxb_alu, shifter_muxb, mar_ram, muxe_mdr; // 1-to-1
     wire [4:0] muxd_alu;
     wire alu_fr_N, alu_fr_Z, alu_fr_C, alu_fr_V, fr_cond_N, fr_cond_Z, fr_cond_alu_C, fr_cond_V;    // ALU to Flag Register & Flag Register to ConditionTester
-    assign IR = ir_bus;
-
-    wire [3:0] in_1, in_2;//bytes fijos
-    wire [31:0] in_0;
-    assign in_1 [3:0] = 4'b1111; //
-    assign in_0 [31:0] = 32'b00000000_00000000_00000000_00000000; //
-    assign in_2 [3:0] = 4'b1110; //
-    // wire in_3;
+    wire [3:0] in_1, in_0, in_2;//bytes fijos
+    wire in_3;
     wire [3:0] muxa_rfa, muxc_rfc;
-    wire [31:0] R15; // Program Counter
 // // Control Signals
     wire fr_ld, rf_ld, ir_ld, mar_ld, mdr_ld, rw, mov, md, me;
     //los añadí
-    wire cond_cu, ram_moc, inv;//control unit y ram
+    wire cond_cu, ram_moc, inv, rst;//control unit y ram
     wire [1:0] wb;//control unit y ram
     wire [2:0] n, s;//control unit
     wire [5:0] cr; //control unit
@@ -2399,9 +1532,6 @@ module DataPath (output reg [31:0] PC, MAR, R1, R2, R3, R5, output [31:0] IR, in
     wire [1:0] ma, mb, mc;
     wire [4:0] op;
     wire [5:0] STATE; //por ahora 6 bits
-
-    wire [3:0] MINCR_Ain, MINCR_Aout, MINCR_Cin, MINCR_Cout;
-    wire MINCR;
     
     ALU_32bit alu (alu_bus, alu_fr_N, alu_fr_Z, alu_fr_C, alu_fr_V, rfpa_alu, muxb_alu, muxd_alu, fr_cond_alu_C);
     ConditionTester condTester (cond_cu, ir_bus [31:28], fr_cond_N, fr_cond_Z, fr_cond_alu_C, fr_cond_V);
@@ -2409,17 +1539,15 @@ module DataPath (output reg [31:0] PC, MAR, R1, R2, R3, R5, output [31:0] IR, in
     IR ir (ir_bus, data_out, ir_ld, Clk); 
     MAR mar (mar_ram, alu_bus, mar_ld, Clk);
     MDR mdr (data_in, muxe_mdr, mdr_ld, Clk);
-    Mux_A muxa (MINCR_Ain, ir_bus [19:16], ir_bus [15:12], in_1, 4'b0000, ma);
-    Mux_B muxb (muxb_alu, rfpb_bus, shifter_muxb, data_in, in_0, mb);
-    Mux_C muxc (MINCR_Cin, ir_bus [15:12], in_1, in_2, ir_bus [19:16], mc);
-    Mux_D muxd (muxd_alu, ir_bus [24:21], op, md);
+    Mux_A muxa (muxa_rfa, ir_bus [19:16], ir_bus [15:12], in_1, in_0, ma);
+    Mux_B muxb (muxb_alu, rfpb_bus, shifter_muxb, data_in, in_0);
+    Mux_C muxc (muxc_rfc, ir_bus [15:12], in_1, n_2, ir_bus [19:16], mc);
+    Mux_D muxd (muxd_alu, ir_bus [24:21], op, in_3, md);
     Mux_E muxe (muxe_mdr, data_out, alu_bus, me);
     ram512x8 ram (ram_moc, data_out, mov, rw, mar_ram, data_in, wb);
-    RegisterFile regFile (rfpa_alu, rfpb_bus, R15, alu_bus, MINCR_Cout, MINCR_Aout, ir_bus [3:0], rf_ld, Clk);//output [31:0] PA, PB, ProgamCounter, input [31:0] PC, input [3:0] C, input [3:0] A, input [3:0] B, input Ld, Clk);
+    RegisterFile regFile (rfpa_alu, rfpb_bus, data_in, ????, alu_bus, muxc_rfc, muxa_rfa, ir_bus [3:0], rf_ld, Clk);//output [31:0] PA, PB, ProgamCounter, input [31:0] PC, input [3:0] C, input [3:0] A, input [3:0] B, input Ld, Clk);
     Shifter shifter (shifter_muxb, alu_fr_C, rfpb_bus, ir_bus, fr_cond_alu_C);
-    ControlUnit cu (STATE, cr, op, n, s, ma, mc, mb, wb, fr_ld, rf_ld, ir_ld, mar_ld, mdr_ld, rw, mov, md, me, inv, MINCR, ir_bus, ram_moc, cond_cu, 1'b0, 1'b0, Clk, RESET);//output [5:0] state, output [5:0] CR, output [4:0] OP, output [2:0] N, S, output [1:0] MA, MC, MB, WB,output FR, RF, IR, MAR, MDR, ReadWrite, MOV, MD, ME, Inv,input [31:0] InstructionRegister, input MOC, Cond, c2, c3, Clk, reset);
-    Mux_Incrementer ma_incr (MINCR_Aout, MINCR_Ain, MINCR);
-    Mux_Incrementer mc_incr (MINCR_Cout, MINCR_Cin, MINCR);
+    ControlUnit cu (STATE, cr, op, n, s, ma, mc, mb, wb, fr_ld, rf_ld, ir_ld, mar_ld, mdr_ld, rw, mov, md, me, inv, ir_bus, ram_moc, cond_cu, ???, ???, Clk, rst);//output [5:0] state, output [5:0] CR, output [4:0] OP, output [2:0] N, S, output [1:0] MA, MC, MB, WB,output FR, RF, IR, MAR, MDR, ReadWrite, MOV, MD, ME, Inv,input [31:0] InstructionRegister, input MOC, Cond, c2, c3, Clk, reset);
 
 endmodule
 
@@ -2427,48 +1555,6 @@ endmodule
 /**********************************************************************
                            TEST MODULE
 ***********************************************************************/
-module ARM_Micro;
-    integer fi, fo, code, i;
-	reg [7:0] data;
-	reg [31:0] Address;
-	wire [31:0] PC, MAR, R1, R2, R3, R5, IR;
-	reg Clk, RESET;
-
-	DataPath dp (PC, MAR, R1, R2, R3, R5, IR, Clk, RESET);
-
-	initial #500 $finish;
-
-	initial begin
-		Clk = 1'b0;
-		repeat (100) #2 Clk = ~Clk;
-	end
-
-	initial begin
-		$display("PC    MAR    R1    R2    R3    R5    IR");
-		$monitor("%d    %d     %d    %d    %d    %d    %b");
-	end
-
-	initial begin fork
-		#4RESET = 1;
-		#8 RESET = 0;
-	join
-	end
-
-	initial begin
-		fi = $fopen("mem.txt", "r");
-		Address = 32'b00000000_00000000_00000000_00000000;
-		while (!$feof(fi)) begin
-			code = $fscanf(fi, "%b", data);
-			dp.ram.Mem[Address] = data;
-			Address = Address + 1;
-		end
-		$fclose(fi);
-		#400
-		Address = 0;
-		while (Address < 100) begin
-			$display("%b %b %b %b", dp.ram.Mem[Address], dp.ram.Mem[Address+1], dp.ram.Mem[Address+2], dp.ram.Mem[Address+3]);
-			Address = Address + 4;
-		end
-	end
-
-endmodule
+// module ARM_Micro;
+// 
+// endmodule
