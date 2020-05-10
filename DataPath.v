@@ -585,7 +585,7 @@ endmodule
 ***********************************************************************/
 module Encoder (output reg [5:0] Out, input [31:0] In, input reset);
     always @ (In, reset)
-    if (reset == 1) Out = 0;
+    if (reset == 1) Out = 60;
     else
     begin
 //------------------000------------------------------------------
@@ -603,6 +603,33 @@ module Encoder (output reg [5:0] Out, input [31:0] In, input reset);
                 endcase
             end
         end
+        if (In [27:25] == 3'b000 && In [4] == 1'b0)
+        begin
+            case (In [24:20])
+            5'b10100:   Out = 57;   //CMP register
+            5'b11010:   Out = 58;   //MOV register
+            5'b11011:   Out = 59;   //MOVS register
+            endcase
+        end
+//---------------------AM3-------------------------------------------
+        if (In [27:25] == 3'b000) begin
+            if (In [24] == 1'b1 && In [7] == 1'b1 && In [4] == 1'b1) 
+            begin
+                case (In [22:21])
+                2'b00:  Out = 26;  //register
+                2'b01:  Out = 29;  //pre-register
+                2'b10:  Out = 16;  //inme
+                2'b11:  Out = 19;  //pre
+                endcase
+            end
+            if (In [24] == 1'b0 && In [7] == 1'b1 && In [4] == 1'b1)
+            begin
+                case (In [22:21])
+                2'b10:  Out = 23;  //post
+                2'b00:  Out = 33;  //post-register
+                endcase
+            end
+        end
 //------------------001-------------------------------------------
         if (In [27:25] == 3'b001) 
         begin
@@ -612,11 +639,11 @@ module Encoder (output reg [5:0] Out, input [31:0] In, input reset);
             5'b10100:   Out = 8;   //CMP
             5'b11010:   Out = 9;   //MOV
             5'b11011:   Out = 13;   //MOVS
-            5'b00000:   Out = 127;    //AND
-            5'b00001:   Out = 126;    //ANDS
-            5'b00100:   Out = 125;    //SUB
-            5'b00101:   Out = 124;    //SUBS
-            5'b11000:   Out = 123;    //ORR
+            5'b00000:   Out = 63;    //AND
+            5'b00001:   Out = 63;    //ANDS
+            5'b00100:   Out = 63;    //SUB
+            5'b00101:   Out = 63;    //SUBS
+            5'b11000:   Out = 53;    //ORR
             endcase
         end
 //--------------------------010-----------------------------------------
@@ -624,63 +651,63 @@ module Encoder (output reg [5:0] Out, input [31:0] In, input reset);
         begin
             case (In [23:22])
             2'b00:  if (In [20] == 1'b1)
-                        Out = 122;   //LDR, inme, -offset
+                        Out = 16;   //LDR, inme, -offset
                     else
-                        Out = 121;   //STR, inme, -offset
+                        Out = 16;   //STR, inme, -offset
             2'b01:  if (In [20] == 1'b1)
-                        Out = 120;   //LDRB, inme, -offset
+                        Out = 16;   //LDRB, inme, -offset
                     else
-                        Out = 119;   //STRB, inme, -offset
+                        Out = 16;   //STRB, inme, -offset
             2'b10:  if (In [20] == 1'b1)
-                        Out = 118;   //LDR, inme, +offset
+                        Out = 16;   //LDR, inme, +offset
                     else
-                        Out = 117;   //STR, inme, +offset
+                        Out = 16;   //STR, inme, +offset
             2'b11:  if (In [20] == 1'b1)
-                        Out = 116;   //LDRB, inme, +offset
+                        Out = 16;   //LDRB, inme, +offset
                     else
-                        Out = 115;   //STRB, inme, +offset
+                        Out = 16;   //STRB, inme, +offset
             endcase
         end
         if (In [27:25] == 3'b010 && In [24] == 1'b1 && In[21] == 1'b1)
         begin
             case (In [23:22])
             2'b00:  if (In [20] == 1'b1)
-                        Out = 114;   //LDR, pre, -offset
+                        Out = 17;   //LDR, pre, -offset
                     else
-                        Out = 113;   //STR, pre, -offset
+                        Out = 17;   //STR, pre, -offset
             2'b01:  if (In [20] == 1'b1)
-                        Out = 112;   //LDRB, pre, -offset
+                        Out = 17;   //LDRB, pre, -offset
                     else
-                        Out = 111;   //STRB, pre, -offset
+                        Out = 17;   //STRB, pre, -offset
             2'b10:  if (In [20] == 1'b1)
-                        Out = 110;   //LDR, pre, +offset
+                        Out = 17;   //LDR, pre, +offset
                     else
-                        Out = 109;   //STR, pre, +offset
+                        Out = 17;   //STR, pre, +offset
             2'b11:  if (In [20] == 1'b1)
-                        Out = 108;   //LDRB, pre, +offset
+                        Out = 17;   //LDRB, pre, +offset
                     else
-                        Out = 107;   //STRB, pre, +offset
+                        Out = 17;   //STRB, pre, +offset
             endcase
         end
         if (In [27:25] == 3'b010 && In [24] == 1'b0 && In[21] == 1'b0)
         begin
             case (In [23:22])
             2'b00:  if (In [20] == 1'b1)
-                        Out = 106;   //LDR, inmepost, -offset
+                        Out = 23;   //LDR, inmepost, -offset
                     else
-                        Out = 105;   //STR, inmepost, -offset
+                        Out = 23;   //STR, inmepost, -offset
             2'b01:  if (In [20] == 1'b1)
-                        Out = 104;   //LDRB, inmepost, -offset
+                        Out = 23;   //LDRB, inmepost, -offset
                     else
-                        Out = 103;   //STRB, inmepost, -offset
+                        Out = 23;   //STRB, inmepost, -offset
             2'b10:  if (In [20] == 1'b1)
-                        Out = 106;   //LDR, inmepost, +offset
+                        Out = 23;   //LDR, inmepost, +offset
                     else
-                        Out = 101;   //STR, inmepost, +offset
+                        Out = 23;   //STR, inmepost, +offset
             2'b11:  if (In [20] == 1'b1)
-                        Out = 100;   //LDRB, inmepost, +offset
+                        Out = 23;   //LDRB, inmepost, +offset
                     else
-                        Out = 99;   //STRB, inmepost, +offset
+                        Out = 23;   //STRB, inmepost, +offset
             endcase
         end
 //---------------------------011---------------------------------------
@@ -688,71 +715,71 @@ module Encoder (output reg [5:0] Out, input [31:0] In, input reset);
         begin
             case (In [23:22])
             2'b00:  if (In [20] == 1'b1)
-                        Out = 90;   //LDR, register, -offset
+                        Out = 26;   //LDR, register, -offset
                     else
-                        Out = 89;   //STR, register, -offset
+                        Out = 26;   //STR, register, -offset
             2'b01:  if (In [20] == 1'b1)
-                        Out = 88;   //LDRB, register, -offset
+                        Out = 26;   //LDRB, register, -offset
                     else
-                        Out = 87;   //STRB, register, -offset
+                        Out = 26;   //STRB, register, -offset
             2'b10:  if (In [20] == 1'b1)
-                        Out = 86;   //LDR, register, +offset
+                        Out = 26;   //LDR, register, +offset
                     else
-                        Out = 85;   //STR, register, +offset
+                        Out = 26;   //STR, register, +offset
             2'b11:  if (In [20] == 1'b1)
-                        Out = 84;   //LDRB, register, +offset
+                        Out = 26;   //LDRB, register, +offset
                     else
-                        Out = 83;   //STRB, register, +offset
+                        Out = 26;   //STRB, register, +offset
             endcase
         end
         if (In [27:25] == 3'b011 && In [24] == 1'b1 && In[21] == 1'b1 && In[4] == 1'b0)
         begin
             case (In [23:22])
             2'b00:  if (In [20] == 1'b1)
-                        Out = 82;   //LDR, preregister, -offset
+                        Out = 29;   //LDR, preregister, -offset
                     else
-                        Out = 81;   //STR, preregister, -offset
+                        Out = 29;   //STR, preregister, -offset
             2'b01:  if (In [20] == 1'b1)
-                        Out = 80;   //LDRB, preregister, -offset
+                        Out = 29;   //LDRB, preregister, -offset
                     else
-                        Out = 79;   //STRB, preregister, -offset
+                        Out = 29;   //STRB, preregister, -offset
             2'b10:  if (In [20] == 1'b1)
-                        Out = 78;   //LDR, preregister, +offset
+                        Out = 29;   //LDR, preregister, +offset
                     else
-                        Out = 77;   //STR, preregister, +offset
+                        Out = 29;   //STR, preregister, +offset
             2'b11:  if (In [20] == 1'b1)
-                        Out = 76;   //LDRB, preregister, +offset
+                        Out = 29;   //LDRB, preregister, +offset
                     else
-                        Out = 75;   //STRB, preregister, +offset
+                        Out = 29;   //STRB, preregister, +offset
             endcase
         end
         if (In [27:25] == 3'b011 && In [24] == 1'b0 && In[4] == 1'b0)
         begin
             case (In [23:22])
             2'b00:  if (In [20] == 1'b1)
-                        Out = 74;   //LDR, postregister, -offset
+                        Out = 33;   //LDR, postregister, -offset
                     else
-                        Out = 73;   //STR, postregister, -offset
+                        Out = 33;   //STR, postregister, -offset
             2'b01:  if (In [20] == 1'b1)
-                        Out = 72;   //LDRB, postregister, -offset
+                        Out = 33;   //LDRB, postregister, -offset
                     else
-                        Out = 71;   //STRB, postregister, -offset
+                        Out = 33;   //STRB, postregister, -offset
             2'b10:  if (In [20] == 1'b1)
-                        Out = 70;   //LDR, postregister, +offset
+                        Out = 33;   //LDR, postregister, +offset
                     else
-                        Out = 69;   //STR, postregister, +offset
+                        Out = 33;   //STR, postregister, +offset
             2'b11:  if (In [20] == 1'b1)
-                        Out = 68;   //LDRB, postregister, +offset
+                        Out = 33;   //LDRB, postregister, +offset
                     else
-                        Out = 67;   //STRB, postregister, +offset
+                        Out = 33;   //STRB, postregister, +offset
             endcase
         end
 //------------------------------101---------------------------------------
         if (In [27:25] == 3'b101)
         begin
             case (In [24])
-            1'b0:   Out = 30;   //B
-            1'b1:   Out = 31;   //BL
+            1'b0:   Out = 14;   //B
+            1'b1:   Out = 15;   //BL
             endcase
         end
     end
