@@ -1,62 +1,201 @@
-module encoder (output reg [5:0] Out, input [31:0] In);
-    always @ (In)
+module Encoder (output reg [5:0] Out, input [31:0] In, input reset);
+    always @ (In, reset)
+    if (reset == 1) Out = 60;
+    else
     begin
-        if (In [27:25] == 3'b000)       //if bits 27 to 25 is 000
-        begin 
-            if (In [24:21] == 4'b0100)  //if opcode is 0100
-            begin
-                case (In [4])
-                1'b0:   Out = 11;       //State 11 == ADD shift
-                1'b1:   Out = 10;       //State 10 == ADD R-R
+//------------------000------------------------------------------
+       if (In [27:25] == 3'b000) begin
+            if (In [24:20] == 5'b01000 && In [4] == 1'b0) begin
+                case (In [11:5])
+                7'b0000000: Out = 5;   //ADD R-R
+                default:    Out = 6;   //ADD shift
+                endcase
+            end
+            if (In [24:20] == 5'b01001 && In [4] == 1'b0) begin
+                case (In [11:5])
+                7'b0000000: Out = 10;   //ADDS R-R
+                default:    Out = 11;   //ADDS shift
                 endcase
             end
         end
-        if (In [27:25] == 3'b001)       //if bits 27 to 25 is 001
+        if (In [27:25] == 3'b000 && In [4] == 1'b0)
         begin
-            case (In [24:21])
-            4'b0100:    Out = 12;       //State 12 == ADD imme
-            4'b1010:    Out = 13;       //State 13 == CMP
-            4'b1101:    Out = 14;       //State 14 == MOV
+            case (In [24:20])
+            5'b10100:   Out = 57;   //CMP register
+            5'b11010:   Out = 58;   //MOV register
+            5'b11011:   Out = 59;   //MOVS register
             endcase
         end
-        if (In [27:25] == 3'b010)       //if bits 27 to 25 is 010
-        begin
-            if (In [24] == 1'b0)        
+//---------------------AM3-------------------------------------------
+        if (In [27:25] == 3'b000) begin
+            if (In [24] == 1'b1 && In [7] == 1'b1 && In [4] == 1'b1) 
             begin
-                case (In [20])
-                1'b0:   Out = 20;       //State 20 == LDR
-                1'b1:   Out = 25;       //State 25 == STR
+                case (In [22:21])
+                2'b00:  Out = 26;  //register
+                2'b01:  Out = 29;  //pre-register
+                2'b10:  Out = 16;  //inme
+                2'b11:  Out = 19;  //pre
+                endcase
+            end
+            if (In [24] == 1'b0 && In [7] == 1'b1 && In [4] == 1'b1)
+            begin
+                case (In [22:21])
+                2'b10:  Out = 23;  //post
+                2'b00:  Out = 33;  //post-register
                 endcase
             end
         end
-        if (In [27:25] == 4'b101)       //if bits 27 to 25 is 101
+//------------------001-------------------------------------------
+        if (In [27:25] == 3'b001) 
         begin
-            if (In [24] == 1'b0)        //branch without link
-            begin
-                case (In [31:28])       //Condition
-                4'b0000:    Out = 30;   //State 30 == BEQ
-                endcase
-            end
+            case (In [24:20])
+            5'b01000:   Out = 7;   //ADD inme
+            5'b01001:   Out = 12;   //ADDS inme
+            5'b10100:   Out = 8;   //CMP
+            5'b11010:   Out = 9;   //MOV
+            5'b11011:   Out = 13;   //MOVS
+            5'b00000:   Out = 63;    //AND
+            5'b00001:   Out = 63;    //ANDS
+            5'b00100:   Out = 63;    //SUB
+            5'b00101:   Out = 63;    //SUBS
+            5'b11000:   Out = 53;    //ORR
+            endcase
         end
-    end
-endmodule
-
-module test_encoder;
-    reg [31:0] X;
-    wire [5:0] Y;
-    encoder fase3 (Y, X);
-    initial begin
-        X [31:28]   =   4'b0000;         //Condition
-        X [27:25]   =   3'b101;          //addresing mode
-        X [24:20]   =   5'b01010;        //Opcode/PUBWL for Load/Store/Link 
-        X [19:16]   =   4'b0000;                   
-        X [15:12]   =   4'b0000;
-        X [11:8]    =   4'b0000;
-        X [7:4]     =   4'b0000;         //bit 4 == register/shift
-        X [3:0]     =   4'b0000;
-    end
-    initial begin
-        $display (" Input     Output ");
-        $monitor (" %h  %d ", X, Y);
+//--------------------------010-----------------------------------------
+        if (In [27:25] == 3'b010 && In [24] == 1'b1 && In[21] == 1'b0)
+        begin
+            case (In [23:22])
+            2'b00:  if (In [20] == 1'b1)
+                        Out = 16;   //LDR, inme, -offset
+                    else
+                        Out = 16;   //STR, inme, -offset
+            2'b01:  if (In [20] == 1'b1)
+                        Out = 16;   //LDRB, inme, -offset
+                    else
+                        Out = 16;   //STRB, inme, -offset
+            2'b10:  if (In [20] == 1'b1)
+                        Out = 16;   //LDR, inme, +offset
+                    else
+                        Out = 16;   //STR, inme, +offset
+            2'b11:  if (In [20] == 1'b1)
+                        Out = 16;   //LDRB, inme, +offset
+                    else
+                        Out = 16;   //STRB, inme, +offset
+            endcase
+        end
+        if (In [27:25] == 3'b010 && In [24] == 1'b1 && In[21] == 1'b1)
+        begin
+            case (In [23:22])
+            2'b00:  if (In [20] == 1'b1)
+                        Out = 17;   //LDR, pre, -offset
+                    else
+                        Out = 17;   //STR, pre, -offset
+            2'b01:  if (In [20] == 1'b1)
+                        Out = 17;   //LDRB, pre, -offset
+                    else
+                        Out = 17;   //STRB, pre, -offset
+            2'b10:  if (In [20] == 1'b1)
+                        Out = 17;   //LDR, pre, +offset
+                    else
+                        Out = 17;   //STR, pre, +offset
+            2'b11:  if (In [20] == 1'b1)
+                        Out = 17;   //LDRB, pre, +offset
+                    else
+                        Out = 17;   //STRB, pre, +offset
+            endcase
+        end
+        if (In [27:25] == 3'b010 && In [24] == 1'b0 && In[21] == 1'b0)
+        begin
+            case (In [23:22])
+            2'b00:  if (In [20] == 1'b1)
+                        Out = 23;   //LDR, inmepost, -offset
+                    else
+                        Out = 23;   //STR, inmepost, -offset
+            2'b01:  if (In [20] == 1'b1)
+                        Out = 23;   //LDRB, inmepost, -offset
+                    else
+                        Out = 23;   //STRB, inmepost, -offset
+            2'b10:  if (In [20] == 1'b1)
+                        Out = 23;   //LDR, inmepost, +offset
+                    else
+                        Out = 23;   //STR, inmepost, +offset
+            2'b11:  if (In [20] == 1'b1)
+                        Out = 23;   //LDRB, inmepost, +offset
+                    else
+                        Out = 23;   //STRB, inmepost, +offset
+            endcase
+        end
+//---------------------------011---------------------------------------
+        if (In [27:25] == 3'b011 && In [24] == 1'b1 && In[21] == 1'b0 && In[4] == 1'b0)
+        begin
+            case (In [23:22])
+            2'b00:  if (In [20] == 1'b1)
+                        Out = 26;   //LDR, register, -offset
+                    else
+                        Out = 26;   //STR, register, -offset
+            2'b01:  if (In [20] == 1'b1)
+                        Out = 26;   //LDRB, register, -offset
+                    else
+                        Out = 26;   //STRB, register, -offset
+            2'b10:  if (In [20] == 1'b1)
+                        Out = 26;   //LDR, register, +offset
+                    else
+                        Out = 26;   //STR, register, +offset
+            2'b11:  if (In [20] == 1'b1)
+                        Out = 26;   //LDRB, register, +offset
+                    else
+                        Out = 26;   //STRB, register, +offset
+            endcase
+        end
+        if (In [27:25] == 3'b011 && In [24] == 1'b1 && In[21] == 1'b1 && In[4] == 1'b0)
+        begin
+            case (In [23:22])
+            2'b00:  if (In [20] == 1'b1)
+                        Out = 29;   //LDR, preregister, -offset
+                    else
+                        Out = 29;   //STR, preregister, -offset
+            2'b01:  if (In [20] == 1'b1)
+                        Out = 29;   //LDRB, preregister, -offset
+                    else
+                        Out = 29;   //STRB, preregister, -offset
+            2'b10:  if (In [20] == 1'b1)
+                        Out = 29;   //LDR, preregister, +offset
+                    else
+                        Out = 29;   //STR, preregister, +offset
+            2'b11:  if (In [20] == 1'b1)
+                        Out = 29;   //LDRB, preregister, +offset
+                    else
+                        Out = 29;   //STRB, preregister, +offset
+            endcase
+        end
+        if (In [27:25] == 3'b011 && In [24] == 1'b0 && In[4] == 1'b0)
+        begin
+            case (In [23:22])
+            2'b00:  if (In [20] == 1'b1)
+                        Out = 33;   //LDR, postregister, -offset
+                    else
+                        Out = 33;   //STR, postregister, -offset
+            2'b01:  if (In [20] == 1'b1)
+                        Out = 33;   //LDRB, postregister, -offset
+                    else
+                        Out = 33;   //STRB, postregister, -offset
+            2'b10:  if (In [20] == 1'b1)
+                        Out = 33;   //LDR, postregister, +offset
+                    else
+                        Out = 33;   //STR, postregister, +offset
+            2'b11:  if (In [20] == 1'b1)
+                        Out = 33;   //LDRB, postregister, +offset
+                    else
+                        Out = 33;   //STRB, postregister, +offset
+            endcase
+        end
+//------------------------------101---------------------------------------
+        if (In [27:25] == 3'b101)
+        begin
+            case (In [24])
+            1'b0:   Out = 14;   //B
+            1'b1:   Out = 15;   //BL
+            endcase
+        end
     end
 endmodule
