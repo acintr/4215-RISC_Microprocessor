@@ -22,7 +22,7 @@ module ALU_32bit (output reg[31:0] Out, output reg N, Z, C_Out, V, input [31:0] 
         5'b01110:   Out = In_A & ~In_B;         
         5'b01111:   Out = ~In_B;                  
         5'b10000:   Out = In_A;                 
-        5'b10001:   {C_Out,Out} = In_A + 4;               
+        5'b10001:   Out = In_A + 4; //{C_Out,Out} = In_A + 4;               
         5'b10010:   {C_Out,Out} = In_A + In_B + 4;       
         endcase
         //ADD
@@ -85,6 +85,7 @@ module ALU_32bit (output reg[31:0] Out, output reg N, Z, C_Out, V, input [31:0] 
                 else
                     N = 0;
             end
+		$display("ALU IN A = %b %d\nALU IN B = %b %d\nALU OUT = %b %d\nOP = %b\t%d=T", In_A, In_A, In_B, In_B, Out, Out, OP, $time);
     end
 endmodule
 
@@ -92,8 +93,8 @@ endmodule
                             CONDITION TESTER
 ***********************************************************************/
 // N Z C V
-module ConditionTester (output reg cond, input [3:0] cond_code, input N, Z, C, V);
-    always @ (cond_code, N, Z, C, V)
+module ConditionTester (output reg cond, input [3:0] cond_code, input N, Z, C, V, Clk);
+    always @ (cond_code, N, Z, C, V, Clk)
     begin
         cond = 0;
         case(cond_code)
@@ -169,6 +170,7 @@ module MDR (output reg [31:0] Out_MDR, input [31:0] In_MDR, input MDR_Ld, Clk);
         begin
         Out_MDR = In_MDR;
         end
+		$display("MDR IN = %b\nMDR OUT = %b	%d=T", In_MDR, Out_MDR, $time);
     end
 endmodule
 
@@ -176,7 +178,7 @@ endmodule
                             MUX A
 ***********************************************************************/
 module Mux_A (output reg [3:0] Out_A, input [3:0] In_A0, In_A1, In_A2, In_A3, input [1:0] S_A);
-    always @ (S_A)
+    always @ (S_A, In_A0, In_A1, In_A2, In_A3)
     begin
         case (S_A)
         2'b00:  Out_A = In_A0;
@@ -191,7 +193,7 @@ endmodule
                             MUX B
 ***********************************************************************/
 module Mux_B (output reg [31:0] Out_B, input [31:0] In_B0, In_B1, In_B2, In_B3, input [1:0] S_B);
-    always @ (S_B)
+    always @ (S_B, In_B0, In_B1, In_B2, In_B3)
     begin
         case (S_B)
         2'b00:  Out_B = In_B0;
@@ -199,6 +201,7 @@ module Mux_B (output reg [31:0] Out_B, input [31:0] In_B0, In_B1, In_B2, In_B3, 
         2'b10:  Out_B = In_B2;
         2'b11:  Out_B = In_B3;
         endcase
+		$display("MUXB: IN00 = %b; IN01 = %b; IN10 = %b;\n IN11 = %b; OUT = %b; MB = %b\t%d=T", In_B0, In_B1, In_B2, In_B3, Out_B, S_B, $time);
     end
 endmodule
 
@@ -206,7 +209,7 @@ endmodule
                             MUX C
 ***********************************************************************/
 module Mux_C (output reg [3:0] Out_C, input [3:0] IReg12_15, Ones, In_C3, IReg16_19, input [1:0] S_C);
-    always @ (S_C)
+    always @ (S_C, IReg12_15, Ones, In_C3, IReg16_19)
     begin
         case (S_C)
         2'b00:  Out_C = IReg12_15;
@@ -221,7 +224,7 @@ endmodule
                             MUX D
 ***********************************************************************/
 module Mux_D (output reg [4:0] Out_D, input [3:0] In_D0, input [4:0] In_D1, input S_D);
-    always @ (S_D)
+    always @ (S_D, In_D0, In_D1)
     begin
         case (S_D)
         1'b0:  Out_D = 5'b00000 + In_D0;
@@ -234,7 +237,7 @@ endmodule
                             MUX E
 ***********************************************************************/
 module Mux_E (output reg [31:0] Out_E, input [31:0] In_E0, In_E1, input S_E);
-    always @ (S_E)
+    always @ (S_E, In_E0, In_E1)
     begin
         case (S_E)
         1'b0:  Out_E = In_E0;
@@ -254,12 +257,12 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
 
 	reg [7:0] Mem[0:511];    //512 localizaciones de 1 byte
     reg dw;
-	initial MOC = 1'b0;      //Memory Operation Complete comienza como cero.
+	// initial MOC = 1'b0;      //Memory Operation Complete comienza como cero.
 
 	always @ (Address, MOV, ReadWrite)   //Se verifica el modulo con cada cambio en Address, MOV o ReadWrite. 
 	begin 
-	
-		#1 MOC = 1'b0;                    //Operacion de Memoria no esta completada. 
+		$display("MOV = %b; R/W = %b; DataType = %b; Address = %b %d\t%d=T", MOV, ReadWrite, datatype, Address, Address, $time);
+		MOC = 1'b0;                    //Operacion de Memoria no esta completada. 
 		
 		if(MOV)                         // Si Memory Operation Valid = 0, nada pasa.
 		begin 
@@ -273,7 +276,7 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
 					begin 
 						DataOut[31:8] = 24'b000000000000000000000000;
 						DataOut[7:0] = Mem[Address];
-						#1 MOC = 1'b1;
+						MOC = 1'b1;
 					end
 					
 					2'b00:             //00: halfword
@@ -281,7 +284,7 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
 						DataOut[31:16] = 16'b0000000000000000;
 						DataOut[15:8] = Mem[Address];
 						DataOut[7:0] = Mem[Address + 1];
-						#1 MOC = 1'b1;
+						MOC = 1'b1;
 					end 
 					
 					2'b10:             //10: word
@@ -290,7 +293,7 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
 						DataOut[23:16] = Mem[Address + 1];
 						DataOut[15:8] = Mem[Address + 2];
 						DataOut[7:0] = Mem[Address + 3];
-						#1 MOC = 1'b1;
+						MOC = 1'b1;
 					end
 
                     2'b11:             //11: doubleword
@@ -301,7 +304,7 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
                             DataOut[23:16] = Mem[Address+5];
                             DataOut[15:8] = Mem[Address+6];
                             DataOut[7:0] = Mem[Address+7];
-                            #1 MOC = 1'b1;
+                            MOC = 1'b1;
                             dw = 0;
                         end
                         else
@@ -310,7 +313,7 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
                         	DataOut[23:16] = Mem[Address+1];
                         	DataOut[15:8] = Mem[Address+2];
                         	DataOut[7:0] = Mem[Address+3];
-                            #1 MOC = 1'b1;
+                            MOC = 1'b1;
                             dw = 1;
                         end
 					end
@@ -398,6 +401,7 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
 				
 			end
 		end
+		$display("MOC = %b; DataOut = %b;\t%d=T", MOC, DataOut, $time);
 	end
 	
 endmodule
@@ -501,14 +505,20 @@ module Mux_16x1 (output reg [31:0] Y, input [3:0] S, input [31:0] R0, R1, R2, R3
 endmodule
 
 // Register File
-module RegisterFile (output [31:0] PA, PB, ProgamCounter, input [31:0] PC, 
+module RegisterFile (output [31:0] r1, r2, r3, r5, r15, PA, PB, input [31:0] PC, 
                     input [3:0] C, input [3:0] A, input [3:0] B, input Ld, Clk);
     wire [31:0] R0M, R1M, R2M, R3M, R4M, R5M, 
                     R6M, R7M, R8M, R9M, R10M, 
                     R11M, R12M, R13M, R14M, R15M;       // Wires from Reg to Mux
     wire E15, E14, E13, E12, E11, E10, E9, 
             E8, E7, E6, E5, E4, E3, E2, E1, E0;         // Wires from Binary Decoder to Reg (Ld)
-    assign ProgramCounter = R15M;
+    
+	assign r1 = R1M;
+	assign r2 = R2M;
+	assign r3 = R3M;
+	assign r5 = R5M;
+	assign r15 = R15M;
+
     // Instantiating Register File internal components
     Register R0 (R0M, PC, E0, Clk); 
     Register R1 (R1M, PC, E1, Clk);
@@ -839,8 +849,10 @@ module Encoder (output reg [5:0] Out, input [31:0] In, input reset);
             1'b1:   Out = 15;   //BL
             endcase
         end
+		$display("Encoder State = %d\t%d=T", Out, $time);
     end
 endmodule
+
 
 // Memory Operation Decoder
 module MOP_Decoder (output reg U, D, L, output reg [1:0] WB, input [31:0] IR, input [5:0] state);
@@ -912,6 +924,7 @@ module MOP_Decoder (output reg U, D, L, output reg [1:0] WB, input [31:0] IR, in
             L = 0;
             WB = 2'b10;
         end
+		$display("Cajita Magica: U = %b; D = %b; L = %b; WB = %b\t%d=T", U, D, L, WB, $time);
     end
 endmodule
 
@@ -999,7 +1012,7 @@ module Microstore (output reg [5:0] state_out, output reg FR, RF, IR, MAR, MDR, 
 output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] CR, 
 		   output reg [2:0] N, output reg [2:0] S, input [5:0] state);
     always @ (state) begin
-        			case(state)
+				case(state)
 	6'b000000:					// STATE 0
         	begin
         		FR = 0;
@@ -1072,13 +1085,13 @@ output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] 
         		MDR = 0;
         		ReadWrite = 1;
         		MOV = 1;
-        		MA = 2'b0;
+        		MA = 2'b00;
         		MB = 2'b00;
         		MC = 2'b00;
         		MD = 0;
         		ME = 0;
         		OP = 5'b00000;
-        		Inv = 0;
+        		Inv = 1;
         		CR = 6'b000011;	// STATE 000011
         		N = 3'b101;		// incr/cr
         		S = 3'b000;
@@ -1100,8 +1113,8 @@ output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] 
         		ME = 0;
         		OP = 5'b00000;
         		Inv = 0;
-        		CR = 6'b000100;	// STATE 000100
-        		N = 3'b110;		// CR/enc
+        		CR = 6'b000001;	// STATE 000001
+        		N = 3'b100;		// CR/enc
         		S = 3'b001;
         		MINCR = 0;
         	end
@@ -1351,7 +1364,7 @@ output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] 
         		MD = 0;
         		ME = 0;
         		OP = 5'b00000;
-        		Inv = 0;
+        		Inv = 1;
         		CR = 6'b010010;	// STATE 010010
         		N = 3'b101;		// incr/CR
         		S = 3'b010;
@@ -1414,7 +1427,7 @@ output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] 
         		MD = 0;
         		ME = 0;
         		OP = 5'b00000;
-        		Inv = 0;
+        		Inv = 1;
         		CR = 6'b010101;	// STATE 010101
         		N = 3'b101;		// incr/CR
         		S = 3'b010;
@@ -1498,7 +1511,7 @@ output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] 
         		MD = 1;
         		ME = 0;
         		OP = 5'b10000;
-        		Inv = 0;
+        		Inv = 1;
         		CR = 6'b011001;	// STATE 011001
         		N = 3'b101;		// incr/CR
         		S = 3'b010;
@@ -1561,7 +1574,7 @@ output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] 
         		MD = 0;
         		ME = 0;
         		OP = 5'b00000;
-        		Inv = 0;
+        		Inv = 1;
         		CR = 6'b011100;	// STATE 011100
         		N = 3'b101;		// incr/CR
         		S = 3'b010;
@@ -1624,7 +1637,7 @@ output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] 
         		MD = 0;
         		ME = 0;
         		OP = 5'b00000;
-        		Inv = 0;
+        		Inv = 1;
         		CR = 6'b011111;	// STATE 011111
         		N = 3'b101;		// incr/CR
         		S = 3'b010;
@@ -1708,7 +1721,7 @@ output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] 
         		MD = 1;
         		ME = 0;
         		OP = 5'b10000;
-        		Inv = 0;
+        		Inv = 1;
         		CR = 6'b100011;	// STATE 100011
         		N = 3'b101;		// incr/CR
         		S = 3'b010;
@@ -1771,7 +1784,7 @@ output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] 
         		MD = 0;
         		ME = 0;
         		OP = 5'b00000;
-        		Inv = 1;
+        		Inv = 0;
         		CR = 6'b101100;	// STATE 101100
         		N = 3'b101;		// incr/CR
         		S = 3'b011;
@@ -1792,7 +1805,7 @@ output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] 
         		MD = 0;
         		ME = 0;
         		OP = 5'b00000;
-        		Inv = 0;
+        		Inv = 1;
         		CR = 6'b101001;	// STATE 101001
         		N = 3'b101;		// incr/CR
         		S = 3'b100;
@@ -1834,7 +1847,7 @@ output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] 
         		MD = 0;
         		ME = 0;
         		OP = 5'b00000;
-        		Inv = 0;
+        		Inv = 1;
         		CR = 6'b100111;	// STATE 100111
         		N = 3'b101;		// incr/CR
         		S = 3'b000;
@@ -1939,7 +1952,7 @@ output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] 
         		MD = 0;
         		ME = 0;
         		OP = 5'b00000;
-        		Inv = 0;
+        		Inv = 1;
         		CR = 6'b110011;	// STATE 110011
         		N = 3'b101;		// incr/CR
         		S = 3'b100;
@@ -1981,7 +1994,7 @@ output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] 
         		MD = 0;
         		ME = 0;
         		OP = 5'b00000;
-        		Inv = 0;
+        		Inv = 1;
         		CR = 6'b101110;	// STATE 101110
         		N = 3'b101;		// incr/CR
         		S = 3'b000;
@@ -2044,7 +2057,7 @@ output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] 
         		MD = 0;
         		ME = 0;
         		OP = 5'b0000;
-        		Inv = 0;
+        		Inv = 1;
         		CR = 6'b110001;	// STATE 110001
         		N = 3'b101;		// incr/CR
         		S = 3'b000;
@@ -2128,7 +2141,7 @@ output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] 
         		MD = 0;
         		ME = 0;
         		OP = 5'b00000;
-        		Inv = 0;
+        		Inv = 1;
         		CR = 6'b110101;	// STATE 110101
         		N = 3'b101;		// incr/CR
         		S = 3'b000;
@@ -2351,6 +2364,7 @@ input [1:0] MB_IN, input [1:0] MC_IN, input [4:0] OP_IN, input [5:0] CR_IN, inpu
         S = S_IN;
         state = state_in;
         MINCR_out = MINCR_in;
+		$display("STATE = %d\t%d=T", state, $time);
     end
 endmodule
 
@@ -2398,14 +2412,15 @@ endmodule
 /**********************************************************************
                             DATA PATH
 ***********************************************************************/
-module DataPath (output reg [31:0] PC, MAR, R1, R2, R3, R5, output [31:0] IR, input Clk, RESET);
+module DataPath (output [31:0] PC, MAR, R1, R2, R3, R5, IR, input Clk, RESET);
     
     // assign in_3 = 1'b0;
     wire [31:0] ir_bus, data_out, data_in, alu_bus, mdr_bus, rfpb_bus; // Busses
-    wire [31:0] rfpa_alu, muxb_alu, shifter_muxb, mar_ram, muxe_mdr; // 1-to-1
+    wire [31:0] rfpa_alu, muxb_alu, shifter_muxb, mar_ram, muxe_mdr, r1, r2, r3, r5, r15; // 1-to-1
     wire [4:0] muxd_alu;
     wire alu_fr_N, alu_fr_Z, alu_fr_C, alu_fr_V, fr_cond_N, fr_cond_Z, fr_cond_alu_C, fr_cond_V;    // ALU to Flag Register & Flag Register to ConditionTester
     assign IR = ir_bus;
+	assign MAR = mar_ram;
 
     wire [3:0] in_1, in_2;//bytes fijos
     wire [31:0] in_0;
@@ -2414,7 +2429,7 @@ module DataPath (output reg [31:0] PC, MAR, R1, R2, R3, R5, output [31:0] IR, in
     assign in_2 [3:0] = 4'b1110; //
     // wire in_3;
     wire [3:0] muxa_rfa, muxc_rfc;
-    wire [31:0] R15; // Program Counter
+    // wire [31:0] R15; // Program Counter
 // // Control Signals
     wire fr_ld, rf_ld, ir_ld, mar_ld, mdr_ld, rw, mov, md, me;
     //los añadí
@@ -2431,18 +2446,18 @@ module DataPath (output reg [31:0] PC, MAR, R1, R2, R3, R5, output [31:0] IR, in
     wire MINCR;
     
     ALU_32bit alu (alu_bus, alu_fr_N, alu_fr_Z, alu_fr_C, alu_fr_V, rfpa_alu, muxb_alu, muxd_alu, fr_cond_alu_C);
-    ConditionTester condTester (cond_cu, ir_bus [31:28], fr_cond_N, fr_cond_Z, fr_cond_alu_C, fr_cond_V);
+    ConditionTester condTester (cond_cu, ir_bus [31:28], fr_cond_N, fr_cond_Z, fr_cond_alu_C, fr_cond_V, Clk);
     Flag_Register flagReg (fr_cond_N, fr_cond_Z, fr_cond_alu_C, fr_cond_V, alu_fr_N, alu_fr_Z, alu_fr_C, alu_fr_V, fr_ld, Clk);
     IR ir (ir_bus, data_out, ir_ld, Clk); 
     MAR mar (mar_ram, alu_bus, mar_ld, Clk);
     MDR mdr (data_in, muxe_mdr, mdr_ld, Clk);
-    Mux_A muxa (MINCR_Ain, ir_bus [19:16], ir_bus [15:12], in_1, 4'b0000, ma);
+    Mux_A muxa (MINCR_Ain, ir_bus [19:16], ir_bus [15:12], 4'b1111, 4'b0000, ma);
     Mux_B muxb (muxb_alu, rfpb_bus, shifter_muxb, data_in, in_0, mb);
-    Mux_C muxc (MINCR_Cin, ir_bus [15:12], in_1, in_2, ir_bus [19:16], mc);
+    Mux_C muxc (MINCR_Cin, ir_bus [15:12], 4'b1111, 4'b1110, ir_bus [19:16], mc);
     Mux_D muxd (muxd_alu, ir_bus [24:21], op, md);
     Mux_E muxe (muxe_mdr, data_out, alu_bus, me);
     ram512x8 ram (ram_moc, data_out, mov, rw, mar_ram, data_in, wb);
-    RegisterFile regFile (rfpa_alu, rfpb_bus, R15, alu_bus, MINCR_Cout, MINCR_Aout, ir_bus [3:0], rf_ld, Clk);//output [31:0] PA, PB, ProgamCounter, input [31:0] PC, input [3:0] C, input [3:0] A, input [3:0] B, input Ld, Clk);
+    RegisterFile regFile (R1, R2, R3, R5, PC, rfpa_alu, rfpb_bus, alu_bus, MINCR_Cout, MINCR_Aout, ir_bus [3:0], rf_ld, Clk);//output [31:0] PA, PB, ProgamCounter, input [31:0] PC, input [3:0] C, input [3:0] A, input [3:0] B, input Ld, Clk);
     Shifter shifter (shifter_muxb, alu_fr_C, rfpb_bus, ir_bus, fr_cond_alu_C);
     ControlUnit cu (STATE, cr, op, n, s, ma, mc, mb, wb, fr_ld, rf_ld, ir_ld, mar_ld, mdr_ld, rw, mov, md, me, inv, MINCR, ir_bus, ram_moc, cond_cu, 1'b0, 1'b0, Clk, RESET);//output [5:0] state, output [5:0] CR, output [4:0] OP, output [2:0] N, S, output [1:0] MA, MC, MB, WB,output FR, RF, IR, MAR, MDR, ReadWrite, MOV, MD, ME, Inv,input [31:0] InstructionRegister, input MOC, Cond, c2, c3, Clk, reset);
     Mux_Incrementer ma_incr (MINCR_Aout, MINCR_Ain, MINCR);
@@ -2471,8 +2486,8 @@ module ARM_Micro;
 	end
 
 	initial begin
-		$display("PC    MAR    R1    R2    R3    R5    IR");
-		$monitor("%d    %d     %d    %d    %d    %d    %b");
+		$display("\tPC         MAR         R1         R2         R3         R5              \tIR");
+		$monitor("%d %d %d %d %d %d\t%b\t%d=T", PC, MAR, R1, R2, R3, R5, IR, $time);
 	end
 
 	initial begin fork
@@ -2490,10 +2505,22 @@ module ARM_Micro;
 			Address = Address + 1;
 		end
 		$fclose(fi);
+
+		dp.ram.Mem[60] = 8'b00000000;
+		dp.ram.Mem[61] = 8'b00000000;
+		dp.ram.Mem[62] = 8'b11111111;
+		dp.ram.Mem[63] = 8'b00000000;
+
+		dp.ram.Mem[64] = 8'b00000000;
+		dp.ram.Mem[65] = 8'b00000000;
+		dp.ram.Mem[66] = 8'b00000000;
+		dp.ram.Mem[67] = 8'b11111111;
+
 		#400
 		Address = 0;
+		$display("\n\n-------------------------MEMORY-------------------------\nAddress   |   Byte0    Byte1    Byte2    Byte3");
 		while (Address < 100) begin
-			$display("%b %b %b %b", dp.ram.Mem[Address], dp.ram.Mem[Address+1], dp.ram.Mem[Address+2], dp.ram.Mem[Address+3]);
+			$display("%d| %b %b %b %b", Address, dp.ram.Mem[Address], dp.ram.Mem[Address+1], dp.ram.Mem[Address+2], dp.ram.Mem[Address+3]);
 			Address = Address + 4;
 		end
 	end
