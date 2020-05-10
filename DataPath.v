@@ -85,7 +85,7 @@ module ALU_32bit (output reg[31:0] Out, output reg N, Z, C_Out, V, input [31:0] 
                 else
                     N = 0;
             end
-		// $display("ALU IN A = %b %d\nALU IN B = %b %d\nALU OUT = %b %d\nOP = %b\t%d=T", In_A, In_A, In_B, In_B, Out, Out, OP, $time);
+		$display("ALU IN A = %b %d\nALU IN B = %b %d\nALU OUT = %b %d\nOP = %b\t%d=T", In_A, In_A, In_B, In_B, Out, Out, OP, $time);
     end
 endmodule
 
@@ -122,9 +122,9 @@ endmodule
                             FLAG REGISTER
 ***********************************************************************/
 module Flag_Register (output reg N_out, Z_out, C_out, V_out, input N_in, Z_in, C_in, V_in, FR_Ld, Clk);
-    always @ (posedge Clk, FR_Ld, N_in, Z_in, C_in, V_in)
+    always @ (posedge Clk, FR_Ld)
     begin
-        if (FR_Ld == 1'b1 && Clk == 1'b1)
+        if (FR_Ld == 1'b1)
         begin
             N_out = N_in;
             Z_out = Z_in;
@@ -138,9 +138,9 @@ endmodule
                             INSTRUCTION REGISTER
 ***********************************************************************/
 module IR (output reg [31:0] Out_IR, input [31:0] In_IR, input IR_Ld, Clk);
-    always @ (posedge Clk, In_IR, IR_Ld)
+    always @ (posedge Clk, IR_Ld)
     begin
-        if (IR_Ld == 1'b1 && Clk == 1'b1)
+        if (IR_Ld == 1'b1)
         begin
         Out_IR = In_IR;
         end
@@ -151,13 +151,13 @@ endmodule
                             MAR
 ***********************************************************************/
 module MAR (output reg [31:0] Out_MAR, input [31:0] In_MAR, input MAR_Ld, Clk);
-    always @ (posedge Clk, MAR_Ld, In_MAR)
+    always @ (posedge Clk, MAR_Ld)
     begin
         if (MAR_Ld == 1'b1 && Clk == 1'b1)
         begin
         Out_MAR = In_MAR;
         end
-		// $display("MARIN = %b\nMAROUT = %b%d=T", In_MAR, Out_MAR, $time);
+		$display("MARIN = %b\nMAROUT = %b%d=T", In_MAR, Out_MAR, $time);
     end
 endmodule
 
@@ -165,7 +165,7 @@ endmodule
                             MDR
 ***********************************************************************/
 module MDR (output reg [31:0] Out_MDR, input [31:0] In_MDR, input MDR_Ld, Clk);
-    always @ (posedge Clk, MDR_Ld, In_MDR)
+    always @ (posedge Clk, MDR_Ld)
     begin
         if (MDR_Ld == 1'b1 && Clk == 1'b1)
         begin
@@ -187,6 +187,7 @@ module Mux_A (output reg [3:0] Out_A, input [3:0] In_A0, In_A1, In_A2, In_A3, in
         2'b10:  Out_A = In_A2;
         2'b11:  Out_A = In_A3;
         endcase
+		$display("MUXA: IN00 = %b; IN01 = %b; IN10 = %b;\n IN11 = %b; OUT = %b; MA = %b\t%d=T", In_A0, In_A1, In_A2, In_A3, Out_A, S_A, $time);
     end
 endmodule
 
@@ -202,7 +203,7 @@ module Mux_B (output reg [31:0] Out_B, input [31:0] In_B0, In_B1, In_B2, In_B3, 
         2'b10:  Out_B = In_B2;
         2'b11:  Out_B = In_B3;
         endcase
-		// $display("MUXB: IN00 = %b; IN01 = %b; IN10 = %b;\n IN11 = %b; OUT = %b; MB = %b\t%d=T", In_B0, In_B1, In_B2, In_B3, Out_B, S_B, $time);
+		$display("MUXB: IN00 = %b; IN01 = %b; IN10 = %b;\n IN11 = %b; OUT = %b; MB = %b\t%d=T", In_B0, In_B1, In_B2, In_B3, Out_B, S_B, $time);
     end
 endmodule
 
@@ -246,6 +247,7 @@ module Mux_E (output reg [31:0] Out_E, input [31:0] In_E0, In_E1, input S_E);
         1'b0:  Out_E = In_E0;
         1'b1:  Out_E = In_E1;
         endcase
+		$display("ME = %b; Out = %b;\t%d=T", S_E, Out_E, $time);
     end
 endmodule
 
@@ -432,8 +434,8 @@ endmodule
 ***********************************************************************/
 // Register
 module Register (output reg [31:0] Q, input [31:0] D, input Ld, Clk);
-    always @ (posedge Clk, Q, Ld)  // Edge trigger
-        if(Ld == 1 && Clk == 1) begin   // Two-gate Register
+    always @ (posedge Clk, Ld)  // Edge trigger
+        if(Ld == 1) begin   // Two-gate Register
             Q = D;
             // $display("New data at register:\nClk = %d      Ld = %b     D = %b      Q = %b        t=%d", Clk, Ld, D, Q, $time);
             end
@@ -2486,11 +2488,11 @@ module ARM_Micro;
 
 	DataPath dp (PC, MAR, R1, R2, R3, R5, IR, Clk, RESET);
 
-	initial #500 $finish;
+	initial #400 $finish;
 
 	initial begin
 		Clk = 1'b0;
-		repeat (100) #5 Clk = ~Clk;
+		repeat (100) #2 Clk = ~Clk;
 	end
 
 	initial begin
@@ -2500,7 +2502,7 @@ module ARM_Micro;
 
 	initial begin fork
 		RESET = 1;
-		#2 RESET = 0;
+		#5 RESET = 0;
 	join
 	end
 
