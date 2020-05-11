@@ -1,8 +1,9 @@
 /**********************************************************************
                             ALU
 ***********************************************************************/
-module ALU_32bit (output reg[31:0] Out, output reg N, Z, C_Out, V, input [31:0] In_A, In_B, input [4:0] OP, input C_In);
+module ALU_32bit (output reg[31:0] Out, output reg N, Z, C_Out, V, input [31:0] In_A, In_B, input [4:0] OP, input C_In, Clk);
     always @ (In_A, In_B, OP)   //Cada vez que cambie In_A, In_B o OP
+	// always @ (negedge Clk)
     begin
         case(OP)
         5'b00000:   Out = In_A & In_B;            
@@ -85,7 +86,7 @@ module ALU_32bit (output reg[31:0] Out, output reg N, Z, C_Out, V, input [31:0] 
                 else
                     N = 0;
             end
-		$display("ALU IN A = %b %d\nALU IN B = %b %d\nALU OUT = %b %d\nOP = %b\t%d=T", In_A, In_A, In_B, In_B, Out, Out, OP, $time);
+		// $display("ALU IN A = %b %d\nALU IN B = %b %d\nALU OUT = %b %d\nOP = %b\t%d=T", In_A, In_A, In_B, In_B, Out, Out, OP, $time);
     end
 endmodule
 
@@ -122,7 +123,7 @@ endmodule
                             FLAG REGISTER
 ***********************************************************************/
 module Flag_Register (output reg N_out, Z_out, C_out, V_out, input N_in, Z_in, C_in, V_in, FR_Ld, Clk);
-    always @ (posedge Clk, FR_Ld)
+    always @ (posedge Clk)
     begin
         if (FR_Ld == 1'b1)
         begin
@@ -138,9 +139,9 @@ endmodule
                             INSTRUCTION REGISTER
 ***********************************************************************/
 module IR (output reg [31:0] Out_IR, input [31:0] In_IR, input IR_Ld, Clk);
-    always @ (posedge Clk, IR_Ld)
+    always @ (posedge Clk, posedge IR_Ld)
     begin
-        if (IR_Ld == 1'b1)
+        if (IR_Ld == 1'b1 && Clk == 1)
         begin
         Out_IR = In_IR;
         end
@@ -151,13 +152,13 @@ endmodule
                             MAR
 ***********************************************************************/
 module MAR (output reg [31:0] Out_MAR, input [31:0] In_MAR, input MAR_Ld, Clk);
-    always @ (posedge Clk, MAR_Ld)
+    always @ (posedge Clk, posedge MAR_Ld)
     begin
-        if (MAR_Ld == 1'b1 && Clk == 1'b1)
+        if (MAR_Ld == 1'b1 && Clk == 1)
         begin
         Out_MAR = In_MAR;
         end
-		$display("MARIN = %b\nMAROUT = %b%d=T", In_MAR, Out_MAR, $time);
+		// $display("MARIN = %b\nMAROUT = %b%d=T", In_MAR, Out_MAR, $time);
     end
 endmodule
 
@@ -165,21 +166,22 @@ endmodule
                             MDR
 ***********************************************************************/
 module MDR (output reg [31:0] Out_MDR, input [31:0] In_MDR, input MDR_Ld, Clk);
-    always @ (posedge Clk, MDR_Ld)
+    always @ (posedge Clk, posedge MDR_Ld)
     begin
-        if (MDR_Ld == 1'b1 && Clk == 1'b1)
+        if (MDR_Ld == 1'b1 && Clk == 1)
         begin
         Out_MDR = In_MDR;
         end
-		$display("MDR IN = %b\nMDR OUT = %b	%d=T", In_MDR, Out_MDR, $time);
+		// $display("MDR IN = %b\nMDR OUT = %b	%d=T", In_MDR, Out_MDR, $time);
     end
 endmodule
 
 /**********************************************************************
                             MUX A
 ***********************************************************************/
-module Mux_A (output reg [3:0] Out_A, input [3:0] In_A0, In_A1, In_A2, In_A3, input [1:0] S_A);
+module Mux_A (output reg [3:0] Out_A, input [3:0] In_A0, In_A1, In_A2, In_A3, input [1:0] S_A, input Clk);
     always @ (S_A, In_A0, In_A1, In_A2, In_A3)
+	// always @ (Clk)
     begin
         case (S_A)
         2'b00:  Out_A = In_A0;
@@ -187,15 +189,16 @@ module Mux_A (output reg [3:0] Out_A, input [3:0] In_A0, In_A1, In_A2, In_A3, in
         2'b10:  Out_A = In_A2;
         2'b11:  Out_A = In_A3;
         endcase
-		$display("MUXA: IN00 = %b; IN01 = %b; IN10 = %b;\n IN11 = %b; OUT = %b; MA = %b\t%d=T", In_A0, In_A1, In_A2, In_A3, Out_A, S_A, $time);
+		// $display("MUXA: IN00 = %b; IN01 = %b; IN10 = %b;\n IN11 = %b; OUT = %b; MA = %b\t%d=T", In_A0, In_A1, In_A2, In_A3, Out_A, S_A, $time);
     end
 endmodule
 
 /**********************************************************************
                             MUX B
 ***********************************************************************/
-module Mux_B (output reg [31:0] Out_B, input [31:0] In_B0, In_B1, In_B2, In_B3, input [1:0] S_B);
+module Mux_B (output reg [31:0] Out_B, input [31:0] In_B0, In_B1, In_B2, In_B3, input [1:0] S_B, input Clk);
     always @ (S_B, In_B0, In_B1, In_B2, In_B3)
+	// always @ (Clk)
     begin
         case (S_B)
         2'b00:  Out_B = In_B0;
@@ -203,15 +206,16 @@ module Mux_B (output reg [31:0] Out_B, input [31:0] In_B0, In_B1, In_B2, In_B3, 
         2'b10:  Out_B = In_B2;
         2'b11:  Out_B = In_B3;
         endcase
-		$display("MUXB: IN00 = %b; IN01 = %b; IN10 = %b;\n IN11 = %b; OUT = %b; MB = %b\t%d=T", In_B0, In_B1, In_B2, In_B3, Out_B, S_B, $time);
+		// $display("MUXB: IN00 = %b; IN01 = %b; IN10 = %b;\n IN11 = %b; OUT = %b; MB = %b\t%d=T", In_B0, In_B1, In_B2, In_B3, Out_B, S_B, $time);
     end
 endmodule
 
 /**********************************************************************
                             MUX C
 ***********************************************************************/
-module Mux_C (output reg [3:0] Out_C, input [3:0] IReg12_15, Ones, In_C3, IReg16_19, input [1:0] S_C);
+module Mux_C (output reg [3:0] Out_C, input [3:0] IReg12_15, Ones, In_C3, IReg16_19, input [1:0] S_C, input Clk);
     always @ (S_C, IReg12_15, Ones, In_C3, IReg16_19)
+	// always @ (Clk)
     begin
         case (S_C)
         2'b00:  Out_C = IReg12_15;
@@ -219,35 +223,37 @@ module Mux_C (output reg [3:0] Out_C, input [3:0] IReg12_15, Ones, In_C3, IReg16
         2'b10:  Out_C = IReg16_19; 
         2'b11:  Out_C = In_C3;
         endcase
-		$display("MC = %b; Out = %b;\t%d=T", S_C, Out_C, $time);
+		// $display("MC = %b; Out = %b;\t%d=T", S_C, Out_C, $time);
     end
 endmodule
 
 /**********************************************************************
                             MUX D
 ***********************************************************************/
-module Mux_D (output reg [4:0] Out_D, input [3:0] In_D0, input [4:0] In_D1, input S_D);
+module Mux_D (output reg [4:0] Out_D, input [3:0] In_D0, input [4:0] In_D1, input S_D, Clk);
     always @ (S_D, In_D0, In_D1)
+	// always @ (Clk)
     begin
         case (S_D)
         1'b0:  Out_D = 5'b00000 + In_D0;
         1'b1:  Out_D = In_D1;
         endcase
-		$display("MD = %b; Out = %b;\t%d=T", S_D, Out_D, $time);
+		// $display("MD = %b; Out = %b;\t%d=T", S_D, Out_D, $time);
     end
 endmodule
 
 /**********************************************************************
                             MUX E
 ***********************************************************************/
-module Mux_E (output reg [31:0] Out_E, input [31:0] In_E0, In_E1, input S_E);
-    always @ (S_E, In_E0, In_E1)
+module Mux_E (output reg [31:0] Out_E, input [31:0] In_E0, In_E1, input S_E, Clk);
+    always @ (S_E, In_E0, In_E1, Clk)
+	// always @ (Clk)
     begin
         case (S_E)
         1'b0:  Out_E = In_E0;
         1'b1:  Out_E = In_E1;
         endcase
-		$display("ME = %b; Out = %b;\t%d=T", S_E, Out_E, $time);
+		// $display("ME = %b; Out = %b;\t%d=T", S_E, Out_E, $time);
     end
 endmodule
 
@@ -281,7 +287,7 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
 					begin 
 						DataOut[31:8] = 24'b000000000000000000000000;
 						DataOut[7:0] = Mem[Address];
-						// #1
+						#1
 						MOC = 1'b1;
 					end
 					
@@ -290,7 +296,7 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
 						DataOut[31:16] = 16'b0000000000000000;
 						DataOut[15:8] = Mem[Address];
 						DataOut[7:0] = Mem[Address + 1];
-						// #1
+						#1
 						MOC = 1'b1;
 					end 
 					
@@ -300,7 +306,7 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
 						DataOut[23:16] = Mem[Address + 1];
 						DataOut[15:8] = Mem[Address + 2];
 						DataOut[7:0] = Mem[Address + 3];
-						// #1
+						#1
 						MOC = 1'b1;
 					end
 
@@ -312,7 +318,7 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
                             DataOut[23:16] = Mem[Address+5];
                             DataOut[15:8] = Mem[Address+6];
                             DataOut[7:0] = Mem[Address+7];
-							// #1
+							#1
                             MOC = 1'b1;
                             dw = 0;
                         end
@@ -322,7 +328,7 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
                         	DataOut[23:16] = Mem[Address+1];
                         	DataOut[15:8] = Mem[Address+2];
                         	DataOut[7:0] = Mem[Address+3];
-							// #1
+							#1
                             MOC = 1'b1;
                             dw = 1;
                         end
@@ -419,8 +425,8 @@ endmodule
 /**********************************************************************
                             Mux Incrementer
 ***********************************************************************/
-module Mux_Incrementer (output reg [3:0] Rout, input [3:0] Rin, input incr);
-    always @ (Rin, incr)
+module Mux_Incrementer (output reg [3:0] Rout, input [3:0] Rin, input incr, Clk);
+    always @ (Rin, incr, Clk)
     begin
         case(incr)
             1'b0: Rout = Rin;
@@ -434,8 +440,8 @@ endmodule
 ***********************************************************************/
 // Register
 module Register (output reg [31:0] Q, input [31:0] D, input Ld, Clk);
-    always @ (posedge Clk, Ld)  // Edge trigger
-        if(Ld == 1) begin   // Two-gate Register
+    always @ (posedge Clk, posedge Ld)  // Edge trigger
+        if(Ld == 1 && Clk == 1) begin   // Two-gate Register
             Q = D;
             // $display("New data at register:\nClk = %d      Ld = %b     D = %b      Q = %b        t=%d", Clk, Ld, D, Q, $time);
             end
@@ -443,9 +449,9 @@ endmodule
 
 // Binary Decoder 4 to 16
 module Bin_Decoder_4x16 (output reg E15, E14, E13, E12, E11, E10, E9, E8, E7, 
-                        E6, E5, E4, E3, E2, E1, E0, input [3:0] C, input Ld);
+                        E6, E5, E4, E3, E2, E1, E0, input [3:0] C, input Ld, Clk);
     
-    always @ (posedge Ld, C) begin
+    always @ (Ld, C) begin
                     E15=0; E14=0; E13=0; E12=0; 
                     E11=0; E10=0; E9=0; E8=0; 
                     E7=0; E6=0; E5=0; E4=0; 
@@ -468,19 +474,19 @@ module Bin_Decoder_4x16 (output reg E15, E14, E13, E12, E11, E10, E9, E8, E7,
                 4'b1101: E13 = 1'b1;
                 4'b1110: E14 = 1'b1;
                 4'b1111: E15 = 1'b1;
-                default begin
-                    E15=0; E14=0; E13=0; E12=0; 
-                    E11=0; E10=0; E9=0; E8=0; 
-                    E7=0; E6=0; E5=0; E4=0; 
-                    E3=0;E2=0;E1=0; E0=0;
-                end
+                // default begin
+                //     E15=0; E14=0; E13=0; E12=0; 
+                //     E11=0; E10=0; E9=0; E8=0; 
+                //     E7=0; E6=0; E5=0; E4=0; 
+                //     E3=0;E2=0;E1=0; E0=0;
+                // end
             endcase
-        else begin
-            E15=0; E14=0; E13=0; E12=0; 
-            E11=0; E10=0; E9=0; E8=0; 
-            E7=0; E6=0; E5=0; E4=0; 
-            E3=0;E2=0;E1=0; E0=0;
-            end
+        // else begin
+        //     E15=0; E14=0; E13=0; E12=0; 
+        //     E11=0; E10=0; E9=0; E8=0; 
+        //     E7=0; E6=0; E5=0; E4=0; 
+        //     E3=0;E2=0;E1=0; E0=0;
+        //     end
             // $display("Binary Decoder: Ld = %b   C = %b  t = %d \n[15:0]    %b %b %b %b %b %b %b %b %b %b %b %b %b %b %b %b", Ld, C, $time, E15, E14, E13, E12, E11, E10, E9, E8, E7, E6, E5, E4, E3, E2, E1, E0);
         end
         
@@ -551,7 +557,7 @@ module RegisterFile (output [31:0] r1, r2, r3, r5, r15, PA, PB, input [31:0] PC,
     Mux_16x1 MB (PB, B, R0M, R1M, R2M, R3M, R4M, R5M, R6M, R7M, 
                 R8M, R9M, R10M, R11M, R12M, R13M, R14M, R15M);
     Bin_Decoder_4x16 BDecoder (E15, E14, E13, E12, E11, E10, E9, E8, E7, 
-                                E6, E5, E4, E3, E2, E1, E0, C, Ld);
+                                E6, E5, E4, E3, E2, E1, E0, C, Ld, Clk);
 endmodule
 
 /**********************************************************************
@@ -1022,7 +1028,7 @@ module Microstore (output reg [5:0] state_out, output reg FR, RF, IR, MAR, MDR, 
 output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] CR, 
 		   output reg [2:0] N, output reg [2:0] S, input [5:0] state);
     always @ (state) begin
-				case(state)
+	case(state)
 	6'b000000:					// STATE 0
         	begin
         		FR = 0;
@@ -1055,7 +1061,7 @@ output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] 
         		MOV = 0;
         		MA = 2'b10;
         		MB = 2'b00;
-        		MC = 2'b00;
+        		MC = 2'b01;
         		MD = 1;
         		ME = 0;
         		OP = 5'b10000;
@@ -1852,7 +1858,7 @@ output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] 
         		ReadWrite = 1;
         		MOV = 1;
         		MA = 2'b00;
-        		MB = 2'b00;
+        		MB = 2'b10;
         		MC = 2'b00;
         		MD = 0;
         		ME = 0;
@@ -1999,7 +2005,7 @@ output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] 
         		ReadWrite = 1;
         		MOV = 1;
         		MA = 2'b00;
-        		MB = 2'b00;
+        		MB = 2'b10;
         		MC = 2'b00;
         		MD = 0;
         		ME = 0;
@@ -2062,7 +2068,7 @@ output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] 
         		ReadWrite = 1;
         		MOV = 1;
         		MA = 2'b00;
-        		MB = 2'b00;
+        		MB = 2'b10;
         		MC = 2'b00;
         		MD = 0;
         		ME = 0;
@@ -2325,6 +2331,27 @@ output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] 
         		S = 3'b000;
         		MINCR = 0;
         	end
+	6'b111101:					// STATE 61
+        	begin
+        		FR = 0;
+        		RF = 1;
+        		IR = 0;
+        		MAR = 0;
+        		MDR = 0;
+        		ReadWrite = 0;
+        		MOV = 0;
+        		MA = 2'b00;
+        		MB = 2'b11;
+        		MC = 2'b01;
+        		MD = 1;
+        		ME = 0;
+        		OP = 5'b01101;
+        		Inv = 0;
+        		CR = 6'b000000;	// STATE 000000
+        		N = 3'b010;		// CR
+        		S = 3'b000;
+        		MINCR = 0;
+        	end
 	6'b000000:		// STATE 0
         	begin
         		FR = 0;
@@ -2374,7 +2401,9 @@ input [1:0] MB_IN, input [1:0] MC_IN, input [4:0] OP_IN, input [5:0] CR_IN, inpu
         S = S_IN;
         state = state_in;
         MINCR_out = MINCR_in;
-		$display("STATE = %d\t%d=T", state, $time);
+		// $display("STATE = %d\t%d=T", state, $time);
+		// $display("FR=%b  RF=%b  IR=%b  MAR=%b  MDR=%b  R/W=%b  MOV=%b  MA=%B  MB=%b  MC=%b  MD=%b  ME=%b  OP=%b  MINCR=%b\nN=%b  INV=%b  S=%b  CR=%b\n\n",
+		// 		FR, RF, IR, MAR, MDR, ReadWrite, MOV, MA, MB, MC, MD, ME, OP, MINCR_out, N, Inv, S, CR);
     end
 endmodule
 
@@ -2455,23 +2484,23 @@ module DataPath (output [31:0] PC, MAR, R1, R2, R3, R5, IR, input Clk, RESET);
     wire [3:0] MINCR_Ain, MINCR_Aout, MINCR_Cin, MINCR_Cout;
     wire MINCR;
     
-    ALU_32bit alu (alu_bus, alu_fr_N, alu_fr_Z, alu_fr_C, alu_fr_V, rfpa_alu, muxb_alu, muxd_alu, fr_cond_alu_C);
+    ALU_32bit alu (alu_bus, alu_fr_N, alu_fr_Z, alu_fr_C, alu_fr_V, rfpa_alu, muxb_alu, muxd_alu, fr_cond_alu_C, Clk);
     ConditionTester condTester (cond_cu, ir_bus [31:28], fr_cond_N, fr_cond_Z, fr_cond_alu_C, fr_cond_V, Clk);
     Flag_Register flagReg (fr_cond_N, fr_cond_Z, fr_cond_alu_C, fr_cond_V, alu_fr_N, alu_fr_Z, alu_fr_C, alu_fr_V, fr_ld, Clk);
     IR ir (ir_bus, data_out, ir_ld, Clk); 
     MAR mar (mar_ram, alu_bus, mar_ld, Clk);
     MDR mdr (data_in, muxe_mdr, mdr_ld, Clk);
-    Mux_A muxa (MINCR_Ain, ir_bus [19:16], ir_bus [15:12], 4'b1111, 4'b0000, ma);
-    Mux_B muxb (muxb_alu, rfpb_bus, shifter_muxb, data_in, in_0, mb);
-    Mux_C muxc (MINCR_Cin, ir_bus [15:12], 4'b1111, 4'b1110, ir_bus [19:16], mc);
-    Mux_D muxd (muxd_alu, ir_bus [24:21], op, md);
-    Mux_E muxe (muxe_mdr, data_out, alu_bus, me);
+    Mux_A muxa (MINCR_Ain, ir_bus [19:16], ir_bus [15:12], 4'b1111, 4'b0000, ma, Clk);
+    Mux_B muxb (muxb_alu, rfpb_bus, shifter_muxb, data_in, in_0, mb, Clk);
+    Mux_C muxc (MINCR_Cin, ir_bus [15:12], 4'b1111, 4'b1110, ir_bus [19:16], mc, Clk);
+    Mux_D muxd (muxd_alu, ir_bus [24:21], op, md, Clk);
+    Mux_E muxe (muxe_mdr, data_out, alu_bus, me, Clk);
     ram512x8 ram (ram_moc, data_out, mov, rw, mar_ram, data_in, wb);
     RegisterFile regFile (R1, R2, R3, R5, PC, rfpa_alu, rfpb_bus, alu_bus, MINCR_Cout, MINCR_Aout, ir_bus [3:0], rf_ld, Clk);//output [31:0] PA, PB, ProgamCounter, input [31:0] PC, input [3:0] C, input [3:0] A, input [3:0] B, input Ld, Clk);
     Shifter shifter (shifter_muxb, alu_fr_C, rfpb_bus, ir_bus, fr_cond_alu_C);
     ControlUnit cu (STATE, cr, op, n, s, ma, mc, mb, wb, fr_ld, rf_ld, ir_ld, mar_ld, mdr_ld, rw, mov, md, me, inv, MINCR, ir_bus, ram_moc, cond_cu, 1'b0, 1'b0, Clk, RESET);//output [5:0] state, output [5:0] CR, output [4:0] OP, output [2:0] N, S, output [1:0] MA, MC, MB, WB,output FR, RF, IR, MAR, MDR, ReadWrite, MOV, MD, ME, Inv,input [31:0] InstructionRegister, input MOC, Cond, c2, c3, Clk, reset);
-    Mux_Incrementer ma_incr (MINCR_Aout, MINCR_Ain, MINCR);
-    Mux_Incrementer mc_incr (MINCR_Cout, MINCR_Cin, MINCR);
+    Mux_Incrementer ma_incr (MINCR_Aout, MINCR_Ain, MINCR, Clk);
+    Mux_Incrementer mc_incr (MINCR_Cout, MINCR_Cin, MINCR, Clk);
 
 endmodule
 
@@ -2492,7 +2521,7 @@ module ARM_Micro;
 
 	initial begin
 		Clk = 1'b0;
-		repeat (100) #2 Clk = ~Clk;
+		repeat (100) #5 Clk = ~Clk;
 	end
 
 	initial begin

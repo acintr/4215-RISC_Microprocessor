@@ -31,7 +31,7 @@
         		MOV = 0;
         		MA = 2'b10;
         		MB = 2'b00;
-        		MC = 2'b00;
+        		MC = 2'b01;
         		MD = 1;
         		ME = 0;
         		OP = 5'b10000;
@@ -71,7 +71,7 @@
         		MDR = 0;
         		ReadWrite = 1;
         		MOV = 1;
-        		MA = 2'b0;
+        		MA = 2'b00;
         		MB = 2'b00;
         		MC = 2'b00;
         		MD = 0;
@@ -828,7 +828,7 @@
         		ReadWrite = 1;
         		MOV = 1;
         		MA = 2'b00;
-        		MB = 2'b00;
+        		MB = 2'b10;
         		MC = 2'b00;
         		MD = 0;
         		ME = 0;
@@ -975,7 +975,7 @@
         		ReadWrite = 1;
         		MOV = 1;
         		MA = 2'b00;
-        		MB = 2'b00;
+        		MB = 2'b10;
         		MC = 2'b00;
         		MD = 0;
         		ME = 0;
@@ -1038,7 +1038,7 @@
         		ReadWrite = 1;
         		MOV = 1;
         		MA = 2'b00;
-        		MB = 2'b00;
+        		MB = 2'b10;
         		MC = 2'b00;
         		MD = 0;
         		ME = 0;
@@ -1277,6 +1277,27 @@
         		Inv = 0;
         		CR = 6'b000000;	// STATE 000000
         		N = 3'b011;		// increment
+        		S = 3'b000;
+        		MINCR = 0;
+        	end
+	6'b111101:					// STATE 61
+        	begin
+        		FR = 0;
+        		RF = 1;
+        		IR = 0;
+        		MAR = 0;
+        		MDR = 0;
+        		ReadWrite = 0;
+        		MOV = 0;
+        		MA = 2'b00;
+        		MB = 2'b11;
+        		MC = 2'b01;
+        		MD = 1;
+        		ME = 0;
+        		OP = 5'b01101;
+        		Inv = 0;
+        		CR = 6'b000000;	// STATE 000000
+        		N = 3'b010;		// CR
         		S = 3'b000;
         		MINCR = 0;
         	end
