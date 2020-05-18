@@ -2413,10 +2413,10 @@ input [1:0] MB_IN, input [1:0] MC_IN, input [4:0] OP_IN, input [5:0] CR_IN, inpu
         S = S_IN;
         state = state_in;
         MINCR_out = MINCR_in;
-		$display("\n\nSTATE = %d\t%d=T", state, $time);
-		$display("FR=%b  RF=%b  IR=%b  MAR=%b  MDR=%b  R/W=%b  MOV=%b  MA=%B  MB=%b  MC=%b  MD=%b  ME=%b  OP=%b  MINCR=%b",
-		 		FR, RF, IR, MAR, MDR, ReadWrite, MOV, MA, MB, MC, MD, ME, OP, MINCR_out);
-		$display("N=%b  INV=%b  S=%b  CR=%b", N, Inv, S, CR);
+		// $display("\n\nSTATE = %d\t%d=T", state, $time);
+		// $display("FR=%b  RF=%b  IR=%b  MAR=%b  MDR=%b  R/W=%b  MOV=%b  MA=%B  MB=%b  MC=%b  MD=%b  ME=%b  OP=%b  MINCR=%b",
+		//  		FR, RF, IR, MAR, MDR, ReadWrite, MOV, MA, MB, MC, MD, ME, OP, MINCR_out);
+		// $display("N=%b  INV=%b  S=%b  CR=%b", N, Inv, S, CR);
     end
 endmodule
 
@@ -2534,11 +2534,11 @@ module ARM_Micro;
 
 	DataPath dp (PC, MAR, R1, R2, R3, R5, IR, Clk, RESET);
 
-	initial #1000 $finish;
+	initial #351 $finish;
 
 	initial begin
 		Clk = 1'b0;
-		repeat (160) #1 Clk = ~Clk;
+		repeat (1000) #1 Clk = ~Clk;
 	end
 
 	initial begin
@@ -2572,13 +2572,13 @@ module ARM_Micro;
 		// dp.ram.Mem[106] = 8'b00000000;
 		// dp.ram.Mem[107] = 8'b11111111;
 
-		// #850
-		// Address = 0;
-		// $display("\n\n-------------------------MEMORY-------------------------\nAddress   |   Byte0    Byte1    Byte2    Byte3");
-		// while (Address < 132) begin
-		// 	$display("%d| %b %b %b %b", Address, dp.ram.Mem[Address], dp.ram.Mem[Address+1], dp.ram.Mem[Address+2], dp.ram.Mem[Address+3]);
-		// 	Address = Address + 4;
-		// end
+		#350
+		Address = 0;
+		$display("\n\n-------------------------MEMORY-------------------------\nAddress   |   Byte0    Byte1    Byte2    Byte3");
+		while (Address < 132) begin
+			$display("%d| %b %b %b %b", Address, dp.ram.Mem[Address], dp.ram.Mem[Address+1], dp.ram.Mem[Address+2], dp.ram.Mem[Address+3]);
+			Address = Address + 4;
+		end
 	end
 
 endmodule
