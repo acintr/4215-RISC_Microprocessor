@@ -282,7 +282,7 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
 		
 		if(MOV)                         // Si Memory Operation Valid = 0, nada pasa.
 		begin 
-		
+			// $display("R/W = %b\tAddr = %b\tDT = %b", ReadWrite, Address, datatype);
 			if(ReadWrite)               //ReadWrite = 1 indica operacion Read. 
 			begin 
 			
@@ -361,17 +361,19 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
 			
 				case(datatype) 
 				
-					2'b00:             //00: byte
+					2'b01:             //00: byte
 					begin 
 						Mem[Address] = DataIn[7:0];
 						#1 MOC = 1'b1;
+						// $display("%b", Address);
 					end
 					
-					2'b01:             //01: Half-word
+					2'b00:             //01: Half-word
 					begin 
 						Mem[Address] = DataIn[15:8];
 						Mem[Address + 1] = DataIn[7:0];
 						#1 MOC = 1'b1;
+						// $display("%b", Address);
 					end
 					
 					2'b10:             //10: Word
@@ -381,6 +383,7 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
 						Mem[Address + 2] = DataIn[15:8];
 						Mem[Address + 3] = DataIn[7:0];
 						#1 MOC = 1'b1;
+						// $display("%b", Address);
 					end
 					
                     2'b11:             //11: doubleword
@@ -393,6 +396,7 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
                             Mem[Address+7] = DataIn[7:0];
                             #1 MOC = 1'b1;
                             dw = 0;
+							// $display("%b", Address);
                         end
                         else
                         begin
@@ -402,6 +406,7 @@ DataIn, input [1:0] datatype); //se incluyo datatype para determinar el tamano d
                             Mem[Address+7] = DataIn[7:0];
                             #1 MOC = 1'b1;
                             dw = 1;
+							// $display("%b", Address);
                         end
 					end
 					// 2'b11:           //11: DoubleWord 
@@ -2534,7 +2539,7 @@ module ARM_Micro;
 
 	DataPath dp (PC, MAR, R1, R2, R3, R5, IR, Clk, RESET);
 
-	initial #351 $finish;
+	initial #400 $finish;
 
 	initial begin
 		Clk = 1'b0;
@@ -2572,7 +2577,7 @@ module ARM_Micro;
 		// dp.ram.Mem[106] = 8'b00000000;
 		// dp.ram.Mem[107] = 8'b11111111;
 
-		#350
+		#399
 		Address = 0;
 		$display("\n\n-------------------------MEMORY-------------------------\nAddress   |   Byte0    Byte1    Byte2    Byte3");
 		while (Address < 132) begin
