@@ -2,7 +2,7 @@
                             ALU
 **********************************************************************/
 module ALU_32bit (output reg[31:0] Out, output reg N, Z, C_Out, V, input [31:0] In_A, In_B, input [4:0] OP, input C_In, Clk);
-    always @ (In_A, In_B, OP, Clk)   //Cada vez que cambie In_A, In_B o OP
+    always @ (In_A, In_B, OP)   //Cada vez que cambie In_A, In_B o OP
 	// always @ (negedge Clk)
     begin
         case(OP)
@@ -88,6 +88,8 @@ module ALU_32bit (output reg[31:0] Out, output reg N, Z, C_Out, V, input [31:0] 
                     N = 0;
             end
 		// $display("ALU IN A = %b %d\nALU IN B = %b %d\nALU OUT = %b %d\nOP = %b\t%d=T", In_A, In_A, In_B, In_B, Out, Out, OP, $time);
+		// $display("ALU OUT = %b %d\nOP = %b\t%d=T\n", Out, Out, OP, $time);
+
     end
 endmodule
 
@@ -497,7 +499,7 @@ module Bin_Decoder_4x16 (output reg E15, E14, E13, E12, E11, E10, E9, E8, E7,
         //     E7=0; E6=0; E5=0; E4=0; 
         //     E3=0;E2=0;E1=0; E0=0;
         //     end
-            // $display("Binary Decoder: Ld = %b   C = %b  t = %d \n[15:0]    %b %b %b %b %b %b %b %b %b %b %b %b %b %b %b %b", Ld, C, $time, E15, E14, E13, E12, E11, E10, E9, E8, E7, E6, E5, E4, E3, E2, E1, E0);
+            // $display("Binary Decoder: Ld = %b   C = %b  %d=T \n[15:0]    %b %b %b %b %b %b %b %b %b %b %b %b %b %b %b %b", Ld, C, $time, E15, E14, E13, E12, E11, E10, E9, E8, E7, E6, E5, E4, E3, E2, E1, E0);
         end
         
 endmodule
@@ -531,7 +533,7 @@ module Mux_16x1 (output reg [31:0] Y, input [3:0] S, input [31:0] R0, R1, R2, R3
 endmodule
 
 // Register File
-module RegisterFile (output [31:0] r1, r2, r3, r5, r15, PA, PB, input [31:0] PC, 
+module RegisterFile (output [31:0] r1, r2, r3, r4, r5, r10, r12, r14, r15, PA, PB, input [31:0] PC, 
                     input [3:0] C, input [3:0] A, input [3:0] B, input Ld, Clk);
     wire [31:0] R0M, R1M, R2M, R3M, R4M, R5M, 
                     R6M, R7M, R8M, R9M, R10M, 
@@ -543,7 +545,14 @@ module RegisterFile (output [31:0] r1, r2, r3, r5, r15, PA, PB, input [31:0] PC,
 	assign r2 = R2M;
 	assign r3 = R3M;
 	assign r5 = R5M;
+	assign r4 = R4M;
 	assign r15 = R15M;
+	assign r10 = R10M;
+	assign r12 = R12M;
+	assign r14 = R14M;
+
+
+
 
     // Instantiating Register File internal components
     Register R0 (R0M, PC, E0, Clk); 
@@ -2420,7 +2429,7 @@ input [1:0] MB_IN, input [1:0] MC_IN, input [4:0] OP_IN, input [5:0] CR_IN, inpu
         MINCR_out = MINCR_in;
 		// $display("\n\nSTATE = %d\t%d=T", state, $time);
 		// $display("FR=%b  RF=%b  IR=%b  MAR=%b  MDR=%b  R/W=%b  MOV=%b  MA=%B  MB=%b  MC=%b  MD=%b  ME=%b  OP=%b  MINCR=%b",
-		//  		FR, RF, IR, MAR, MDR, ReadWrite, MOV, MA, MB, MC, MD, ME, OP, MINCR_out);
+		 		// FR, RF, IR, MAR, MDR, ReadWrite, MOV, MA, MB, MC, MD, ME, OP, MINCR_out);
 		// $display("N=%b  INV=%b  S=%b  CR=%b", N, Inv, S, CR);
     end
 endmodule
@@ -2469,7 +2478,7 @@ endmodule
 /**********************************************************************
                             DATA PATH
 ***********************************************************************/
-module DataPath (output [31:0] PC, MAR, R1, R2, R3, R5, IR, input Clk, RESET);
+module DataPath (output [31:0] PC, MAR, R1, R2, R3, R4, R5, R10, R12, R14, IR, input Clk, RESET);
     
     // assign in_3 = 1'b0;
     wire [31:0] ir_bus, data_out, data_in, alu_bus, mdr_bus, rfpb_bus; // Busses
@@ -2514,7 +2523,7 @@ module DataPath (output [31:0] PC, MAR, R1, R2, R3, R5, IR, input Clk, RESET);
     Mux_D muxd (muxd_alu, ir_bus [24:21], op, md, Clk);
     Mux_E muxe (muxe_mdr, data_out, alu_bus, me, Clk);
     ram512x8 ram (ram_moc, data_out, mov, rw, mar_ram, data_in, wb);
-    RegisterFile regFile (R1, R2, R3, R5, PC, rfpa_alu, rfpb_bus, alu_bus, MINCR_Cout, MINCR_Aout, ir_bus [3:0], rf_ld, Clk);//output [31:0] PA, PB, ProgamCounter, input [31:0] PC, input [3:0] C, input [3:0] A, input [3:0] B, input Ld, Clk);
+    RegisterFile regFile (R1, R2, R3, R4, R5, R10, R12, R14, PC, rfpa_alu, rfpb_bus, alu_bus, MINCR_Cout, MINCR_Aout, ir_bus [3:0], rf_ld, Clk);//output [31:0] PA, PB, ProgamCounter, input [31:0] PC, input [3:0] C, input [3:0] A, input [3:0] B, input Ld, Clk);
     Shifter shifter (shifter_muxb, alu_fr_C, rfpb_bus, ir_bus, fr_cond_alu_C);
     ControlUnit cu (STATE, cr, op, n, s, ma, mc, mb, wb, fr_ld, rf_ld, ir_ld, mar_ld, mdr_ld, rw, mov, md, me, inv, MINCR, ir_bus, ram_moc, cond_cu, 1'b0, 1'b0, Clk, RESET);//output [5:0] state, output [5:0] CR, output [4:0] OP, output [2:0] N, S, output [1:0] MA, MC, MB, WB,output FR, RF, IR, MAR, MDR, ReadWrite, MOV, MD, ME, Inv,input [31:0] InstructionRegister, input MOC, Cond, c2, c3, Clk, reset);
     Mux_Incrementer ma_incr (MINCR_Aout, MINCR_Ain, MINCR, Clk);
@@ -2534,10 +2543,10 @@ module ARM_Micro;
     integer fi, fo, code, i;
 	reg [7:0] data;
 	reg [31:0] Address;
-	wire [31:0] PC, MAR, R1, R2, R3, R5, IR;
+	wire [31:0] PC, MAR, R1, R2, R3, R4, R5, R10, R12, R14, IR;
 	reg Clk, RESET;
 
-	DataPath dp (PC, MAR, R1, R2, R3, R5, IR, Clk, RESET);
+	DataPath dp (PC, MAR, R1, R2, R3, R4, R5, R10, R12, R14, IR, Clk, RESET);
 
 	initial #600 $finish;
 
@@ -2547,8 +2556,8 @@ module ARM_Micro;
 	end
 
 	initial begin
-		$display("\tPC         MAR         R1         R2         R3         R5              \tIR");
-		$monitor("%d %d %d %d %d %d\t%b%d=T", PC, MAR, R1, R2, R3, R5, IR, $time);
+		$display("\tPC         MAR         R1         R2         R3         R4         R5         R10        R12        R14             \tIR");
+		$monitor("%d %d %d %d %d %d %d %d %d %d\t%b%d=T", PC, MAR, R1, R2, R3, R4, R5, R10, R12, R14, IR, $time);
 	end
 
 	initial begin fork
@@ -2558,7 +2567,7 @@ module ARM_Micro;
 	end
 
 	initial begin
-		fi = $fopen("prog2.txt", "r");
+		fi = $fopen("prog3.txt", "r");
 		Address = 32'b00000000_00000000_00000000_00000000;
 		while (!$feof(fi)) begin
 			code = $fscanf(fi, "%b", data);
