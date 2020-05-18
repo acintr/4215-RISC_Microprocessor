@@ -1349,7 +1349,7 @@ output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] 
         		MC = 2'b01;
         		MD = 1;
         		ME = 0;
-        		OP = 5'b10010;
+        		OP = 5'b00100;
         		Inv = 0;
         		CR = 6'b000001;	// STATE 000001
         		N = 3'b010;		// CR
@@ -2413,9 +2413,10 @@ input [1:0] MB_IN, input [1:0] MC_IN, input [4:0] OP_IN, input [5:0] CR_IN, inpu
         S = S_IN;
         state = state_in;
         MINCR_out = MINCR_in;
-		// $display("STATE = %d\t%d=T", state, $time);
-		// $display("FR=%b  RF=%b  IR=%b  MAR=%b  MDR=%b  R/W=%b  MOV=%b  MA=%B  MB=%b  MC=%b  MD=%b  ME=%b  OP=%b  MINCR=%b\nN=%b  INV=%b  S=%b  CR=%b\n\n",
-		//  		FR, RF, IR, MAR, MDR, ReadWrite, MOV, MA, MB, MC, MD, ME, OP, MINCR_out, N, Inv, S, CR);
+		$display("\n\nSTATE = %d\t%d=T", state, $time);
+		$display("FR=%b  RF=%b  IR=%b  MAR=%b  MDR=%b  R/W=%b  MOV=%b  MA=%B  MB=%b  MC=%b  MD=%b  ME=%b  OP=%b  MINCR=%b",
+		 		FR, RF, IR, MAR, MDR, ReadWrite, MOV, MA, MB, MC, MD, ME, OP, MINCR_out);
+		$display("N=%b  INV=%b  S=%b  CR=%b", N, Inv, S, CR);
     end
 endmodule
 
@@ -2533,7 +2534,7 @@ module ARM_Micro;
 
 	DataPath dp (PC, MAR, R1, R2, R3, R5, IR, Clk, RESET);
 
-	initial #2000 $finish;
+	initial #1000 $finish;
 
 	initial begin
 		Clk = 1'b0;
@@ -2542,7 +2543,7 @@ module ARM_Micro;
 
 	initial begin
 		$display("\tPC         MAR         R1         R2         R3         R5              \tIR");
-		$monitor("%d %d %d %d %d %d\t%b\t", PC, MAR, R1, R2, R3, R5, IR);
+		$monitor("%d %d %d %d %d %d\t%b%d=T", PC, MAR, R1, R2, R3, R5, IR, $time);
 	end
 
 	initial begin fork
@@ -2571,13 +2572,13 @@ module ARM_Micro;
 		// dp.ram.Mem[106] = 8'b00000000;
 		// dp.ram.Mem[107] = 8'b11111111;
 
-		#1950
-		Address = 0;
-		$display("\n\n-------------------------MEMORY-------------------------\nAddress   |   Byte0    Byte1    Byte2    Byte3");
-		while (Address < 68) begin
-			$display("%d| %b %b %b %b", Address, dp.ram.Mem[Address], dp.ram.Mem[Address+1], dp.ram.Mem[Address+2], dp.ram.Mem[Address+3]);
-			Address = Address + 4;
-		end
+		// #850
+		// Address = 0;
+		// $display("\n\n-------------------------MEMORY-------------------------\nAddress   |   Byte0    Byte1    Byte2    Byte3");
+		// while (Address < 132) begin
+		// 	$display("%d| %b %b %b %b", Address, dp.ram.Mem[Address], dp.ram.Mem[Address+1], dp.ram.Mem[Address+2], dp.ram.Mem[Address+3]);
+		// 	Address = Address + 4;
+		// end
 	end
 
 endmodule
