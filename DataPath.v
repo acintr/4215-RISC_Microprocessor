@@ -658,6 +658,11 @@ module Shifter (output reg [31:0] Q, output reg C_out, input signed [31:0] RF, i
                 begin
                     Q[11:0] = IR[11:0];
                 end
+			// 3'b011:
+			// 	if (IR[24] == 1 && IR[21] == 0)
+			// 	begin
+
+			// 	end
         endcase
     end
    
@@ -714,7 +719,22 @@ module Encoder (output reg [5:0] Out, input [31:0] In, input reset);
             end
         end
 //------------------001-------------------------------------------
-        if (In [27:25] == 3'b001) 
+        // if (In [27:25] == 3'b001) 
+        // begin
+        //     case (In [24:20])
+        //     5'b01000:   Out = 7;   //ADD inme
+        //     5'b01001:   Out = 12;   //ADDS inme
+        //     5'b10100:   Out = 8;   //CMP
+        //     5'b11010:   Out = 9;   //MOV
+        //     5'b11011:   Out = 13;   //MOVS
+        //     5'b00000:   Out = 63;    //AND
+        //     5'b00001:   Out = 63;    //ANDS
+        //     5'b00100:   Out = 63;    //SUB
+        //     5'b00101:   Out = 63;    //SUBS
+        //     5'b11000:   Out = 53;    //ORR
+        //     endcase
+        // end
+		 if (In [27:25] == 3'b001) 
         begin
             case (In [24:20])
             5'b01000:   Out = 7;   //ADD inme
@@ -722,11 +742,11 @@ module Encoder (output reg [5:0] Out, input [31:0] In, input reset);
             5'b10100:   Out = 8;   //CMP
             5'b11010:   Out = 9;   //MOV
             5'b11011:   Out = 13;   //MOVS
-            5'b00000:   Out = 63;    //AND
-            5'b00001:   Out = 63;    //ANDS
-            5'b00100:   Out = 63;    //SUB
-            5'b00101:   Out = 63;    //SUBS
-            5'b11000:   Out = 53;    //ORR
+            5'b00000:   Out = 7;    //AND
+            5'b00001:   Out = 10;    //ANDS
+            5'b00100:   Out = 7;    //SUB
+            5'b00101:   Out = 12;    //SUBS
+            5'b11000:   Out = 7;    //ORR
             endcase
         end
 //--------------------------010-----------------------------------------
@@ -2517,7 +2537,7 @@ module ARM_Micro;
 
 	DataPath dp (PC, MAR, R1, R2, R3, R5, IR, Clk, RESET);
 
-	initial #400 $finish;
+	initial #600 $finish;
 
 	initial begin
 		Clk = 1'b0;
@@ -2545,17 +2565,17 @@ module ARM_Micro;
 		end
 		$fclose(fi);
 
-		dp.ram.Mem[100] = 8'b00000000;
-		dp.ram.Mem[101] = 8'b00000000;
-		dp.ram.Mem[102] = 8'b11111111;
-		dp.ram.Mem[103] = 8'b00000000;
+		// dp.ram.Mem[100] = 8'b00000000;
+		// dp.ram.Mem[101] = 8'b00000000;
+		// dp.ram.Mem[102] = 8'b11111111;
+		// dp.ram.Mem[103] = 8'b00000000;
 
-		dp.ram.Mem[104] = 8'b00000000;
-		dp.ram.Mem[105] = 8'b00000000;
-		dp.ram.Mem[106] = 8'b00000000;
-		dp.ram.Mem[107] = 8'b11111111;
+		// dp.ram.Mem[104] = 8'b00000000;
+		// dp.ram.Mem[105] = 8'b00000000;
+		// dp.ram.Mem[106] = 8'b00000000;
+		// dp.ram.Mem[107] = 8'b11111111;
 
-		#400
+		#500
 		Address = 0;
 		$display("\n\n-------------------------MEMORY-------------------------\nAddress   |   Byte0    Byte1    Byte2    Byte3");
 		while (Address < 600) begin

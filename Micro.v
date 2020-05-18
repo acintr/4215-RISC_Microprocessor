@@ -2,7 +2,7 @@
                             ALU
 **********************************************************************/
 module ALU_32bit (output reg[31:0] Out, output reg N, Z, C_Out, V, input [31:0] In_A, In_B, input [4:0] OP, input C_In, Clk);
-    always @ (In_A, In_B, OP)   //Cada vez que cambie In_A, In_B o OP
+    always @ (In_A, In_B, OP, Clk)   //Cada vez que cambie In_A, In_B o OP
 	// always @ (negedge Clk)
     begin
         case(OP)
@@ -24,8 +24,9 @@ module ALU_32bit (output reg[31:0] Out, output reg N, Z, C_Out, V, input [31:0] 
         5'b01111:   Out = ~In_B;                  
         5'b10000:   Out = In_A;                 
         5'b10001:   {C_Out,Out} = In_A + 4;               
-        5'b10010:   {C_Out,Out} = In_A + In_B + 4;       
+        5'b10010:   {C_Out,Out} = In_A + In_B + 4;    
         endcase
+		// $display("OP = %b", OP);
         //ADD
         if (OP == 4 || OP == 5 || OP == 11 || OP == 17 || OP == 18)
             begin
@@ -86,7 +87,7 @@ module ALU_32bit (output reg[31:0] Out, output reg N, Z, C_Out, V, input [31:0] 
                 else
                     N = 0;
             end
-		//$display("ALU IN A = %b %d\nALU IN B = %b %d\nALU OUT = %b %d\nOP = %b\t%d=T", In_A, In_A, In_B, In_B, Out, Out, OP, $time);
+		// $display("ALU IN A = %b %d\nALU IN B = %b %d\nALU OUT = %b %d\nOP = %b\t%d=T", In_A, In_A, In_B, In_B, Out, Out, OP, $time);
     end
 endmodule
 
@@ -116,6 +117,7 @@ module ConditionTester (output reg cond, input [3:0] cond_code, input N, Z, C, V
             4'b1110: cond = 1;   // AL Always
             default: cond = 0;
         endcase
+		// $display("Cond Code = %b", cond_code);
     end
 endmodule
 
@@ -131,6 +133,7 @@ module Flag_Register (output reg N_out, Z_out, C_out, V_out, input N_in, Z_in, C
             Z_out = Z_in;
             C_out = C_in;
             V_out = V_in;
+			// $display("N=%b  Z=%b  C=%b  V=%b", N_out, Z_out, C_out, V_out);
         end
     end
 endmodule
@@ -155,9 +158,10 @@ module MAR (output reg [31:0] Out_MAR, input [31:0] In_MAR, input MAR_Ld, Clk);
     always @ (Clk)
     begin
 	   // if (MAR_Ld == 1'b1)
-        if (MAR_Ld == 1'b1 && Clk == 1)
+        if (MAR_Ld == 1'b1 && Clk == 1'b1)
         begin
         Out_MAR = In_MAR;
+		$display("MARIN = %b\nMAROUT = %b  \nMARLd = %b %d=T", In_MAR, Out_MAR, MAR_Ld, $time);
         end
 		//$display("MARIN = %b\nMAROUT = %b  \nMARLd = %b %d=T", In_MAR, Out_MAR, MAR_Ld, $time);
     end
@@ -659,6 +663,13 @@ module Shifter (output reg [31:0] Q, output reg C_out, input signed [31:0] RF, i
                 begin
                     Q[11:0] = IR[11:0];
                 end
+			3'b101:
+				begin
+					// Q[31:8] = IR[23:0];
+					// Q[7:0] = 8'b00000000;
+					// Q = Q >>> 1'd8;
+					Q[31:0] <= {{8{IR[23]}}, IR[23:0]}*4;
+				end
         endcase
     end
    
@@ -1632,7 +1643,7 @@ output reg [1:0] MB, output reg [1:0] MC, output reg [4:0] OP, output reg [5:0] 
         		MC = 2'b00;
         		MD = 1;
         		ME = 0;
-        		OP = 5'b00100;
+        		OP = 5'b00010;
         		Inv = 0;
         		CR = 6'b100100;	// STATE 100100
         		N = 3'b010;		// CR
@@ -2402,9 +2413,9 @@ input [1:0] MB_IN, input [1:0] MC_IN, input [4:0] OP_IN, input [5:0] CR_IN, inpu
         S = S_IN;
         state = state_in;
         MINCR_out = MINCR_in;
-	/*	$display("STATE = %d\t%d=T", state, $time);
-		$display("FR=%b  RF=%b  IR=%b  MAR=%b  MDR=%b  R/W=%b  MOV=%b  MA=%B  MB=%b  MC=%b  MD=%b  ME=%b  OP=%b  MINCR=%b\nN=%b  INV=%b  S=%b  CR=%b\n\n",
-		 		FR, RF, IR, MAR, MDR, ReadWrite, MOV, MA, MB, MC, MD, ME, OP, MINCR_out, N, Inv, S, CR);*/
+		// $display("STATE = %d\t%d=T", state, $time);
+		// $display("FR=%b  RF=%b  IR=%b  MAR=%b  MDR=%b  R/W=%b  MOV=%b  MA=%B  MB=%b  MC=%b  MD=%b  ME=%b  OP=%b  MINCR=%b\nN=%b  INV=%b  S=%b  CR=%b\n\n",
+		//  		FR, RF, IR, MAR, MDR, ReadWrite, MOV, MA, MB, MC, MD, ME, OP, MINCR_out, N, Inv, S, CR);
     end
 endmodule
 
@@ -2488,9 +2499,9 @@ module DataPath (output [31:0] PC, MAR, R1, R2, R3, R5, IR, input Clk, RESET);
     ALU_32bit alu (alu_bus, alu_fr_N, alu_fr_Z, alu_fr_C, alu_fr_V, rfpa_alu, muxb_alu, muxd_alu, fr_cond_alu_C, Clk);
     ConditionTester condTester (cond_cu, ir_bus [31:28], fr_cond_N, fr_cond_Z, fr_cond_alu_C, fr_cond_V, Clk);
     Flag_Register flagReg (fr_cond_N, fr_cond_Z, fr_cond_alu_C, fr_cond_V, alu_fr_N, alu_fr_Z, alu_fr_C, alu_fr_V, fr_ld, Clk);
-    IR ir (ir_bus, data_out, ir_ld, Clk); 
-    MAR mar (mar_ram, alu_bus, mar_ld, Clk);
-    MDR mdr (data_in, muxe_mdr, mdr_ld, Clk);
+    // IR ir (ir_bus, data_out, ir_ld, Clk); 
+    // MAR mar (mar_ram, alu_bus, mar_ld, Clk);
+    // MDR mdr (data_in, muxe_mdr, mdr_ld, Clk);
     Mux_A muxa (MINCR_Ain, ir_bus [19:16], ir_bus [15:12], 4'b1111, 4'b0000, ma, Clk);
     Mux_B muxb (muxb_alu, rfpb_bus, shifter_muxb, data_in, in_0, mb, Clk);
     Mux_C muxc (MINCR_Cin, ir_bus [15:12], 4'b1111, 4'b1110, ir_bus [19:16], mc, Clk);
@@ -2502,11 +2513,14 @@ module DataPath (output [31:0] PC, MAR, R1, R2, R3, R5, IR, input Clk, RESET);
     ControlUnit cu (STATE, cr, op, n, s, ma, mc, mb, wb, fr_ld, rf_ld, ir_ld, mar_ld, mdr_ld, rw, mov, md, me, inv, MINCR, ir_bus, ram_moc, cond_cu, 1'b0, 1'b0, Clk, RESET);//output [5:0] state, output [5:0] CR, output [4:0] OP, output [2:0] N, S, output [1:0] MA, MC, MB, WB,output FR, RF, IR, MAR, MDR, ReadWrite, MOV, MD, ME, Inv,input [31:0] InstructionRegister, input MOC, Cond, c2, c3, Clk, reset);
     Mux_Incrementer ma_incr (MINCR_Aout, MINCR_Ain, MINCR, Clk);
     Mux_Incrementer mc_incr (MINCR_Cout, MINCR_Cin, MINCR, Clk);
-    initial begin
-        $display ("                  PC         MAR        R1         R2         R3         R5       IR");
-	repeat (160) #1 $display("Datapath: %d %d %d %d %d %d %b ",  PC, MAR, R1, R2, R3, R5, IR);
+	// initial begin
+    //     $display ("                  PC         MAR        R1         R2         R3         R5       IR");
+	// repeat (160) #1 $display("Datapath: %d %d %d %d %d %d %b ",  PC, MAR, R1, R2, R3, R5, IR);
 
-	end
+	// end
+	Register mar (mar_ram, alu_bus, mar_ld, Clk);
+	Register mdr (data_in, muxe_mdr, mdr_ld, Clk);
+	Register ir (ir_bus, data_out, ir_ld, Clk);
 
 endmodule
 
@@ -2519,17 +2533,17 @@ module ARM_Micro;
 
 	DataPath dp (PC, MAR, R1, R2, R3, R5, IR, Clk, RESET);
 
-	initial #160 $finish;
+	initial #2000 $finish;
 
 	initial begin
 		Clk = 1'b0;
 		repeat (160) #1 Clk = ~Clk;
 	end
 
-	/*initial begin
+	initial begin
 		$display("\tPC         MAR         R1         R2         R3         R5              \tIR");
 		$monitor("%d %d %d %d %d %d\t%b\t", PC, MAR, R1, R2, R3, R5, IR);
-	end*/
+	end
 
 	initial begin fork
 		RESET = 1;
@@ -2538,7 +2552,7 @@ module ARM_Micro;
 	end
 
 	initial begin
-		fi = $fopen("Mem.txt", "r");
+		fi = $fopen("mem.txt", "r");
 		Address = 32'b00000000_00000000_00000000_00000000;
 		while (!$feof(fi)) begin
 			code = $fscanf(fi, "%b", data);
@@ -2547,23 +2561,23 @@ module ARM_Micro;
 		end
 		$fclose(fi);
 
-		dp.ram.Mem[100] = 8'b00000000;
-		dp.ram.Mem[101] = 8'b00000000;
-		dp.ram.Mem[102] = 8'b11111111;
-		dp.ram.Mem[103] = 8'b00000000;
+		// dp.ram.Mem[100] = 8'b00000000;
+		// dp.ram.Mem[101] = 8'b00000000;
+		// dp.ram.Mem[102] = 8'b11111111;
+		// dp.ram.Mem[103] = 8'b00000000;
 
-		dp.ram.Mem[104] = 8'b00000000;
-		dp.ram.Mem[105] = 8'b00000000;
-		dp.ram.Mem[106] = 8'b00000000;
-		dp.ram.Mem[107] = 8'b11111111;
+		// dp.ram.Mem[104] = 8'b00000000;
+		// dp.ram.Mem[105] = 8'b00000000;
+		// dp.ram.Mem[106] = 8'b00000000;
+		// dp.ram.Mem[107] = 8'b11111111;
 
-		#750
+		#1950
 		Address = 0;
-		/*$display("\n\n-------------------------MEMORY-------------------------\nAddress   |   Byte0    Byte1    Byte2    Byte3");
-		while (Address < 600) begin
+		$display("\n\n-------------------------MEMORY-------------------------\nAddress   |   Byte0    Byte1    Byte2    Byte3");
+		while (Address < 68) begin
 			$display("%d| %b %b %b %b", Address, dp.ram.Mem[Address], dp.ram.Mem[Address+1], dp.ram.Mem[Address+2], dp.ram.Mem[Address+3]);
 			Address = Address + 4;
-		end*/
+		end
 	end
 
 endmodule

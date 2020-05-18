@@ -95,7 +95,7 @@ endmodule
 ***********************************************************************/
 // N Z C V
 module ConditionTester (output reg cond, input [3:0] cond_code, input N, Z, C, V, Clk);
-    always @ (cond_code, N, Z, C, V, Clk)
+    always @ (cond_code, N, Z, C, V)
     begin
         cond = 0;
         case(cond_code)
@@ -145,6 +145,7 @@ module IR (output reg [31:0] Out_IR, input [31:0] In_IR, input IR_Ld, Clk);
         begin
         Out_IR = In_IR;
         end
+		// $display("IRIN = %b\nIROUT = %b  \nIRLd = %b %d=T", In_IR, Out_IR, IR_Ld, $time);
     end
 endmodule
 
@@ -159,7 +160,7 @@ module MAR (output reg [31:0] Out_MAR, input [31:0] In_MAR, input MAR_Ld, Clk);
         begin
         Out_MAR = In_MAR;
         end
-		//$display("MARIN = %b\nMAROUT = %b  \nMARLd = %b %d=T", In_MAR, Out_MAR, MAR_Ld, $time);
+		// $display("MARIN = %b\nMAROUT = %b  \nMARLd = %b %d=T", In_MAR, Out_MAR, MAR_Ld, $time);
     end
 endmodule
 
@@ -247,7 +248,7 @@ endmodule
                             MUX E
 ***********************************************************************/
 module Mux_E (output reg [31:0] Out_E, input [31:0] In_E0, In_E1, input S_E, Clk);
-    always @ (S_E, In_E0, In_E1, Clk)
+    always @ (S_E, In_E0, In_E1)
 	// always @ (Clk)
     begin
         case (S_E)
@@ -427,7 +428,7 @@ endmodule
                             Mux Incrementer
 ***********************************************************************/
 module Mux_Incrementer (output reg [3:0] Rout, input [3:0] Rin, input incr, Clk);
-    always @ (Rin, incr, Clk)
+    always @ (Rin, incr)
     begin
         case(incr)
             1'b0: Rout = Rin;
@@ -444,7 +445,7 @@ module Register (output reg [31:0] Q, input [31:0] D, input Ld, Clk);
     always @ (posedge Clk)  // Edge trigger
         if(Ld == 1) begin   // Two-gate Register
             Q = D;
-            // $display("New data at register:\nClk = %d      Ld = %b     D = %b      Q = %b        t=%d", Clk, Ld, D, Q, $time);
+            // $display("New data at register:\nClk = %d      Ld = %b     D = %d      Q = %d        t=%d", Clk, Ld, D, Q, $time);
             end
 endmodule
 
@@ -452,7 +453,7 @@ endmodule
 module Bin_Decoder_4x16 (output reg E15, E14, E13, E12, E11, E10, E9, E8, E7, 
                         E6, E5, E4, E3, E2, E1, E0, input [3:0] C, input Ld, Clk);
     
-    always @ (Ld, C) begin
+    always @ (Ld) begin
                     E15=0; E14=0; E13=0; E12=0; 
                     E11=0; E10=0; E9=0; E8=0; 
                     E7=0; E6=0; E5=0; E4=0; 
@@ -2402,9 +2403,9 @@ input [1:0] MB_IN, input [1:0] MC_IN, input [4:0] OP_IN, input [5:0] CR_IN, inpu
         S = S_IN;
         state = state_in;
         MINCR_out = MINCR_in;
-		$display("STATE = %d\t%d=T", state, $time);
-		$display("FR=%b  RF=%b  IR=%b  MAR=%b  MDR=%b  R/W=%b  MOV=%b  MA=%B  MB=%b  MC=%b  MD=%b  ME=%b  OP=%b  MINCR=%b\nN=%b  INV=%b  S=%b  CR=%b\n\n",
-		 		FR, RF, IR, MAR, MDR, ReadWrite, MOV, MA, MB, MC, MD, ME, OP, MINCR_out, N, Inv, S, CR);
+		// $display("STATE = %d\t%d=T", state, $time);
+		// $display("FR=%b  RF=%b  IR=%b  MAR=%b  MDR=%b  R/W=%b  MOV=%b  MA=%B  MB=%b  MC=%b  MD=%b  ME=%b  OP=%b  MINCR=%b\nN=%b  INV=%b  S=%b  CR=%b\n\n",
+		//  		FR, RF, IR, MAR, MDR, ReadWrite, MOV, MA, MB, MC, MD, ME, OP, MINCR_out, N, Inv, S, CR);
     end
 endmodule
 
@@ -2518,7 +2519,7 @@ module ARM_Micro;
 
 	DataPath dp (PC, MAR, R1, R2, R3, R5, IR, Clk, RESET);
 
-	initial #800 $finish;
+	initial #600 $finish;
 
 	initial begin
 		Clk = 1'b0;
